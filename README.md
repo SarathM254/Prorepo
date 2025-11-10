@@ -1,178 +1,193 @@
 # Proto - Campus News Website
 
-A modern, responsive campus news website with user authentication and profile management.
+A modern, responsive campus news platform with user authentication and MVC architecture.
 
-## Features
+## Quick Start
 
-### Frontend
-- **Responsive Design**: Mobile-first design that works on all devices
-- **Inshorts-style Layout**: Card-based news layout similar to Inshorts
-- **User Authentication**: Login/Register system with session management
-- **Profile Management**: View and edit user profiles
-- **Modern UI/UX**: Clean, professional interface with smooth animations
-
-### Backend
-- **Node.js/Express Server**: RESTful API with session management
-- **SQLite Database**: Lightweight database for user data
-- **Authentication**: Secure login/logout with password hashing
-- **Profile Management**: Full CRUD operations for user profiles
-
-## Installation & Setup
-
-### Prerequisites
-- Node.js (v14 or higher)
-- npm (Node Package Manager)
-
-### Backend Setup
-
-1. Navigate to the backend directory:
+1. **Install & Run**:
 ```bash
-cd Proto/backend
-```
-
-2. Install dependencies:
-```bash
+cd backend
 npm install
-```
-
-3. Start the server:
-```bash
 npm start
 ```
 
-The backend server will start on `http://localhost:3000`
+2. **Access**: Open `http://localhost:3000`
 
-### Frontend Setup
+3. **Default Login**:
+   - Email: `admin@proto.com`
+   - Password: `admin123`
 
-The frontend files are already set up in the main Proto directory. The server serves the static files automatically.
-
-## Usage
-
-### Starting the Application
-
-1. **Start the Backend Server**:
-```bash
-cd Proto/backend
-npm start
-```
-
-2. **Access the Application**:
-   - Open your browser and go to `http://localhost:3000`
-   - You'll be redirected to the login page
-
-### Default Credentials
-
-For testing purposes, a default admin account is created:
-- **Email**: admin@proto.com
-- **Password**: admin123
-
-### User Registration
-
-1. Click "Create New Account" on the login page
-2. Fill in your details (Name, Email, Password)
-3. Click "Create Account"
-4. You'll be automatically logged in and redirected to the main page
-
-### Profile Management
-
-1. Click on your profile icon in the bottom navigation (mobile) or top navigation (desktop)
-2. View your profile details
-3. Click "Edit Profile" to modify your information
-4. Click "Logout" to sign out
-
-## API Endpoints
-
-### Authentication
-- `POST /api/login` - User login
-- `POST /api/register` - User registration
-- `POST /api/logout` - User logout
-- `GET /api/auth/status` - Check authentication status
-
-### Profile
-- `GET /api/profile` - Get user profile
-- `PUT /api/profile` - Update user profile
-
-## Project Structure
+## 📁 Project Structure (MVC Architecture)
 
 ```
 Proto/
+├── css/                        # CSS Modules (9 files)
+│   ├── base.css               # Foundation styles
+│   ├── header.css             # Top navigation
+│   ├── navigation.css         # Bottom nav
+│   ├── cards.css              # Article cards
+│   ├── forms.css              # Submission form
+│   ├── profile.css            # Profile modal
+│   ├── footer.css             # Footer
+│   ├── loading.css            # Loading states
+│   └── auth.css               # Login/register
+│
+├── js/                         # JavaScript Modules (8 files)
+│   ├── models/
+│   │   └── ArticleModel.js    # Data & API calls
+│   ├── views/
+│   │   ├── ArticleView.js     # Article rendering
+│   │   ├── ProfileView.js     # Profile UI
+│   │   └── FormView.js        # Form UI
+│   ├── controllers/
+│   │   └── AppController.js   # Business logic
+│   ├── utils/
+│   │   └── helpers.js         # Helper functions
+│   ├── auth/
+│   │   └── login.js           # Authentication
+│   └── app.js                 # Entry point
+│
 ├── backend/
-│   ├── database.js          # Database setup and functions
-│   ├── server.js            # Express server and API routes
-│   ├── package.json         # Backend dependencies
-│   └── proto.db             # SQLite database (created automatically)
-├── index.html               # Main application page
-├── login.html               # Login/Register page
-├── style.css               # Main stylesheet
-├── script.js               # Frontend JavaScript
-└── README.md               # This file
+│   ├── server.js              # Express server & API
+│   ├── database.js            # SQLite database
+│   └── package.json
+│
+├── index.html                 # Main page
+└── login.html                 # Login/register page
 ```
 
-## Features in Detail
+## 🎯 Code Organization (MVC Pattern)
 
-### Mobile Experience
-- **Full-screen cards**: Each news article takes up the full screen on mobile
-- **Swipe-friendly**: Touch-optimized interface
-- **Sticky navigation**: Header and bottom navigation stay in place
-- **Responsive images**: Images scale properly on all devices
+**Model** (`js/models/`) - Handles data and API calls
+- `ArticleModel.js` - Fetch/submit articles, user profile, logout
 
-### Desktop Experience
-- **Grid layout**: Multiple articles visible at once
-- **Hover effects**: Interactive elements with smooth animations
-- **Professional design**: Clean, modern interface
+**View** (`js/views/`) - Handles UI rendering
+- `ArticleView.js` - Renders articles and layouts
+- `ProfileView.js` - Renders profile modal
+- `FormView.js` - Renders article submission form
 
-### Authentication System
-- **Secure sessions**: Server-side session management
-- **Password hashing**: bcrypt for secure password storage
-- **Auto-redirect**: Automatic redirect to login if not authenticated
-- **Profile persistence**: User data saved between sessions
+**Controller** (`js/controllers/`) - Handles logic and events
+- `AppController.js` - Connects models and views, event handling
 
-### News Features
-- **Card-based layout**: Clean, organized news display
-- **Category tags**: Color-coded article categories
-- **Author information**: Byline with author and timestamp
-- **Action buttons**: Bookmark and share functionality
-- **Infinite scroll**: Simulated loading of additional articles
+**Utils** (`js/utils/`) - Helper functions
+- `helpers.js` - Time formatting, utilities
 
-## Development
+## ✨ Features
+
+### User Features
+- 🔐 Login/Registration with secure authentication
+- 👤 Profile management (view/edit)
+- 📝 Article submission form
+- 📱 Fully responsive (mobile/tablet/desktop)
+- ♾️ Infinite scroll on mobile
+- 🎨 Modern, clean UI
+
+### Technical Features
+- **MVC Architecture** - Clean separation of concerns
+- **Modular CSS** - 9 component-based files
+- **Modular JS** - 8 organized modules
+- **Session Management** - Secure cookie-based sessions
+- **SQLite Database** - Lightweight, file-based
+- **RESTful API** - Clean API endpoints
+
+## 🔌 API Endpoints
+
+### Authentication
+- `POST /api/login` - User login
+- `POST /api/register` - Create account
+- `POST /api/logout` - Logout
+- `GET /api/auth/status` - Check auth status
+
+### Articles
+- `GET /api/articles` - Get all articles
+- `POST /api/articles` - Submit new article
+
+### Profile
+- `GET /api/profile` - Get user profile
+- `PUT /api/profile` - Update profile
+
+## 🛠️ Quick Reference
+
+### Need to modify...?
+
+| What | Files |
+|------|-------|
+| Article display | `css/cards.css` + `js/views/ArticleView.js` |
+| Login page | `css/auth.css` + `js/auth/login.js` |
+| Submission form | `css/forms.css` + `js/views/FormView.js` |
+| Profile modal | `css/profile.css` + `js/views/ProfileView.js` |
+| Navigation | `css/navigation.css` or `css/header.css` |
+| API calls | `js/models/ArticleModel.js` |
+| Business logic | `js/controllers/AppController.js` |
+| Responsive design | `@media` queries in CSS files |
+
+## 📱 Responsive Breakpoints
+
+- **Mobile**: ≤768px (single column, infinite scroll, bottom nav)
+- **Tablet**: 769-1024px (2 columns)
+- **Desktop**: ≥1025px (3 columns, fixed grid)
+
+## 🔧 Development Tips
 
 ### Adding New Features
-1. Backend: Add new routes in `server.js`
-2. Frontend: Add new functions in `script.js`
-3. Database: Modify `database.js` for new data structures
+1. **Model**: Add data operations in `js/models/ArticleModel.js`
+2. **View**: Add rendering in appropriate view file
+3. **Controller**: Add event handling in `js/controllers/AppController.js`
+4. **Styles**: Create or update relevant CSS file
 
-### Customization
-- **Styling**: Modify `style.css` for visual changes
-- **Content**: Update `index.html` for new articles
-- **Database**: Add new tables in `database.js`
+### File Organization Rules
+- Keep files under 300 lines
+- One responsibility per file
+- CSS organized by component
+- JS organized by MVC layer
 
-## Troubleshooting
+## 🐛 Troubleshooting
 
-### Common Issues
+| Issue | Solution |
+|-------|----------|
+| Port 3000 in use | Change PORT in `server.js` or kill process |
+| Database errors | Delete `proto.db` and restart server |
+| Session issues | Enable cookies, use `localhost:3000` |
+| Styling broken | Check browser console, verify CSS files load |
+| JS errors | Check console, verify script loading order |
 
-1. **Port already in use**:
-   - Change the PORT in `server.js` or kill the process using port 3000
+## 🔒 Security
 
-2. **Database errors**:
-   - Delete `proto.db` file and restart the server to recreate the database
+- ✅ Passwords hashed with bcrypt
+- ✅ Server-side session management
+- ✅ Input validation on all endpoints
+- ✅ CORS configured for development
 
-3. **CORS issues**:
-   - Ensure the frontend is served from the same origin as the backend
+## 📦 Dependencies
 
-4. **Session not persisting**:
-   - Check that cookies are enabled in your browser
-   - Ensure you're accessing the site via `http://localhost:3000`
+**Backend** (see `backend/package.json`):
+- express - Web server
+- express-session - Session management
+- bcrypt - Password hashing
+- sqlite3 - Database
+- cors - Cross-origin requests
+- multer - File uploads
 
-### Logs
-Check the console output for any error messages. The server logs all database operations and API requests.
+## 🚀 Production Deployment (Optional)
 
-## Security Notes
+For production, consider:
+1. Use environment variables for secrets
+2. Enable HTTPS
+3. Use production database (PostgreSQL/MySQL)
+4. Add module bundling (Webpack)
+5. Minify CSS/JS
+6. Add caching headers
+7. Implement rate limiting
 
-- Passwords are hashed using bcrypt
-- Sessions are stored server-side
-- CORS is configured for local development
-- Input validation on all API endpoints
+## 📝 Notes
 
-## License
+- This is a **campus news website** with article submission capabilities
+- Code is organized in **MVC pattern** for maintainability
+- **Mobile-first design** with full responsive support
+- All original monolithic files have been split into modules
+- Website functionality remains **100% identical** to before reorganization
 
-This project is for educational purposes. Feel free to modify and use as needed.
+---
+
+**Version**: 2.0 (Modular Architecture)  
+**Last Updated**: November 10, 2025
