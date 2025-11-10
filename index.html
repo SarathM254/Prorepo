@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proto - Campus News</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">Proto</h1>
+            <nav class="nav">
+                <a href="#" class="nav-link active">My Feed</a>
+                <a href="#" class="nav-link">Campus</a>
+                <a href="#" class="nav-link">Sports</a>
+                <a href="#" class="nav-link">Events</a>
+                <a href="#" class="nav-link">Opinion</a>
+            </nav>
+            <div class="header-actions">
+                <button class="menu-btn"><i class="fas fa-ellipsis-h"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Loading State -->
+        <div class="loading-container" id="loadingContainer">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Loading articles...</p>
+            </div>
+        </div>
+
+        <!-- Featured Story -->
+        <section class="featured-story" id="featuredStory" style="display: none;">
+            <!-- Featured article will be loaded here -->
+        </section>
+
+        <!-- News Cards Grid -->
+        <section class="news-grid" id="newsGrid" style="display: none;">
+            <!-- Articles will be loaded here -->
+        </section>
+    </main>
+
+    <!-- Article Submission Form Modal -->
+    <div class="article-form-modal" id="articleFormModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus"></i> Submit Article</h2>
+                <button class="close-modal" id="closeArticleForm">&times;</button>
+            </div>
+            <form class="article-form" id="articleForm">
+                <div class="form-group">
+                    <label for="articleTitle">Article Heading *</label>
+                    <input type="text" id="articleTitle" name="title" required maxlength="100" placeholder="Enter article heading">
+                    <div class="char-count" id="titleCount">0/100</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="articleBody">Article Body *</label>
+                    <textarea id="articleBody" name="body" required maxlength="450" placeholder="Write your article content here..." rows="6"></textarea>
+                    <div class="char-count" id="bodyCount">0/450</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="articleTag">Category *</label>
+                    <select id="articleTag" name="tag" required>
+                        <option value="">Select a category</option>
+                        <option value="Campus">Campus</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Events">Events</option>
+                        <option value="Opinion">Opinion</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="articleImage">Article Photo *</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload or drag and drop</p>
+                        <p class="file-info">PNG, JPG, GIF up to 5MB</p>
+                        <input type="file" id="articleImage" name="image" accept="image/*" required>
+                    </div>
+                    <div class="image-preview" id="imagePreview" style="display: none;">
+                        <img id="previewImg" src="" alt="Preview">
+                        <button type="button" id="removeImage">Remove</button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" id="cancelArticle">Cancel</button>
+                    <button type="submit" class="submit-btn" id="submitArticle">
+                        <i class="fas fa-paper-plane"></i> Submit Article
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item add-article-btn" id="addArticleBtn">
+            <i class="fas fa-plus"></i>
+            <span>Add</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Proto</h4>
+                <p>Your campus news source</p>
+            </div>
+            <div class="footer-section">
+                <h4>Categories</h4>
+                <ul>
+                    <li><a href="#">Campus</a></li>
+                    <li><a href="#">Sports</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Opinion</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>Email: news@proto.edu</p>
+                <p>Phone: (555) 123-4567</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Proto. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
