@@ -85,6 +85,11 @@ const AppController = {
     renderContentBasedOnView(articles) {
         const isMobile = this.isMobileView();
         console.log(`renderContentBasedOnView: isMobile = ${isMobile}`);
+        
+        // Reset cursor and loop state for fresh rendering
+        ArticleModel.cursor = 1;
+        ArticleModel.resetLoop();
+        
         ArticleView.renderInitialLayout(articles, isMobile);
         this.toggleInfiniteScroll(isMobile);
     },
@@ -101,13 +106,16 @@ const AppController = {
             this.scrollObserver = null;
         }
 
-        if (enable && ArticleView.elements.footer) {
-            console.log("toggleInfiniteScroll: enabling observer.");
+        if (enable && ArticleView.elements.scrollSentinel) {
+            console.log("toggleInfiniteScroll: enabling observer for mobile.");
             this.scrollObserver = new IntersectionObserver(
                 this.handleInfiniteScroll.bind(this), 
-                { threshold: 0.1 }
+                { 
+                    threshold: 0.1,
+                    rootMargin: '400px' // Load much earlier for seamless experience
+                }
             );
-            this.scrollObserver.observe(ArticleView.elements.footer);
+            this.scrollObserver.observe(ArticleView.elements.scrollSentinel);
         } else if (!enable) {
             console.log("toggleInfiniteScroll: infinite scroll disabled for desktop.");
             ArticleView.toggleLoadingIndicator(false);
@@ -233,17 +241,56 @@ const AppController = {
     handleInfiniteScroll(entries) {
         console.log("handleInfiniteScroll: IntersectionObserver fired.", 
                     "isIntersecting:", entries[0].isIntersecting, 
-                    "ArticleModel.articles.length:", ArticleModel.articles.length);
-        if (entries[0].isIntersecting && !this.isLoading && ArticleModel.articles.length > 0) {
+                    "cursor:", ArticleModel.cursor,
+                    "total articles:", ArticleModel.articles.length);
+        
+        // Check if we've reached the end - shuffle and continue
+        if (ArticleModel.cursor >= ArticleModel.articles.length && 
+            entries[0].isIntersecting && 
+            !this.isLoading) {
+            
+            console.log("Reached end of articles - shuffling for infinite scroll");
             this.isLoading = true;
             ArticleView.toggleLoadingIndicator(true);
             
+            // Shuffle articles and continue loading
             setTimeout(() => {
+                ArticleModel.shuffleArticles();
                 const nextBatch = ArticleModel.getNextBatch();
-                ArticleView.renderArticleGrid(nextBatch);
+                
+                if (nextBatch.length > 0) {
+                    ArticleView.renderArticleGrid(nextBatch);
+                    console.log("Loaded", nextBatch.length, "shuffled articles");
+                }
+                
                 ArticleView.toggleLoadingIndicator(false);
                 this.isLoading = false;
-            }, 1000);
+            }, 400);
+            
+            return;
+        }
+        
+        // Check if we should load more articles
+        const shouldLoadMore = entries[0].isIntersecting && 
+                               !this.isLoading && 
+                               ArticleModel.cursor < ArticleModel.articles.length;
+        
+        if (shouldLoadMore) {
+            this.isLoading = true;
+            ArticleView.toggleLoadingIndicator(true);
+            
+            // Simulate network delay for smooth UX
+            setTimeout(() => {
+                const nextBatch = ArticleModel.getNextBatch();
+                
+                if (nextBatch.length > 0) {
+                    ArticleView.renderArticleGrid(nextBatch);
+                    console.log("Loaded", nextBatch.length, "more articles");
+                }
+                
+                ArticleView.toggleLoadingIndicator(false);
+                this.isLoading = false;
+            }, 400);
         }
     },
 

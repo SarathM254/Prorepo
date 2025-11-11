@@ -10,7 +10,8 @@ const ArticleView = {
         loadingContainer: null,
         featuredStory: null,
         newsGrid: null,
-        footer: null
+        footer: null,
+        scrollSentinel: null
     },
 
     /**
@@ -21,6 +22,33 @@ const ArticleView = {
         this.elements.featuredStory = document.getElementById('featuredStory');
         this.elements.newsGrid = document.getElementById('newsGrid');
         this.elements.footer = document.querySelector('.footer');
+        this.createScrollSentinel();
+    },
+
+    /**
+     * Creates a scroll sentinel element for infinite scroll detection
+     */
+    createScrollSentinel() {
+        // Remove existing sentinel if any
+        if (this.elements.scrollSentinel) {
+            this.elements.scrollSentinel.remove();
+        }
+        
+        // Create new sentinel element
+        const sentinel = document.createElement('div');
+        sentinel.id = 'scroll-sentinel';
+        sentinel.style.height = '20px';
+        sentinel.style.visibility = 'hidden';
+        
+        // Insert after news grid
+        if (this.elements.newsGrid && this.elements.newsGrid.parentNode) {
+            this.elements.newsGrid.parentNode.insertBefore(
+                sentinel, 
+                this.elements.newsGrid.nextSibling
+            );
+        }
+        
+        this.elements.scrollSentinel = sentinel;
     },
 
     /**
@@ -30,6 +58,10 @@ const ArticleView = {
      */
     renderInitialLayout(articles, isMobileView) {
         this.elements.loadingContainer.style.display = 'none';
+        
+        // Clean up any existing loading indicators
+        const existingIndicator = document.querySelector('.loading-indicator');
+        if (existingIndicator) existingIndicator.remove();
         
         if (!articles || articles.length === 0) {
             this.renderEmptyState();
@@ -138,15 +170,23 @@ const ArticleView = {
      * @param {boolean} show - Whether to show the indicator
      */
     toggleLoadingIndicator(show) {
-        let indicator = this.elements.footer.querySelector('.loading-indicator');
+        // Find existing indicator
+        let indicator = document.querySelector('.loading-indicator');
+        
         if (show) {
             if (!indicator) {
                 indicator = document.createElement('div');
                 indicator.className = 'loading-indicator';
                 indicator.innerHTML = `<div class="spinner"></div><p>Loading more articles...</p>`;
-                this.elements.footer.insertAdjacentElement('beforebegin', indicator);
+                
+                // Insert before scroll sentinel (works on mobile and desktop)
+                if (this.elements.scrollSentinel) {
+                    this.elements.scrollSentinel.insertAdjacentElement('beforebegin', indicator);
+                }
             }
-            indicator.style.display = 'block';
+            if (indicator) {
+                indicator.style.display = 'flex';
+            }
         } else {
             if (indicator) {
                 indicator.style.display = 'none';

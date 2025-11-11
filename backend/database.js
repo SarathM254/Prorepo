@@ -147,6 +147,54 @@ function addSampleArticles() {
             body: "The newly constructed student center offers modern facilities including study rooms, recreational areas, and dining options.",
             tag: "Student Life",
             imagePath: "/images/article-7.jpg"
+        },
+        {
+            title: "Environmental Club Launches Campus Green Initiative",
+            body: "Student-led environmental group introduces new recycling programs and sustainability workshops to promote eco-friendly practices on campus.",
+            tag: "Campus",
+            imagePath: "/images/article-8.jpg"
+        },
+        {
+            title: "Drama Society's Winter Performance Sold Out",
+            body: "The annual winter theater production received rave reviews with all shows completely sold out. Students showcased exceptional talent in acting and stage production.",
+            tag: "Events",
+            imagePath: "/images/article-9.jpg"
+        },
+        {
+            title: "Career Fair Attracts Top Tech Companies",
+            body: "Over 50 leading technology companies participated in this year's career fair, offering internships and full-time positions to graduating students.",
+            tag: "Campus",
+            imagePath: "/images/article-10.jpg"
+        },
+        {
+            title: "University Debate Team Takes National Title",
+            body: "Our debate team emerged victorious in the national championship, defeating teams from prestigious universities across the country.",
+            tag: "Sports",
+            imagePath: "/images/article-11.jpg"
+        },
+        {
+            title: "New Library Wing Features Smart Study Pods",
+            body: "The library expansion includes innovative study spaces with advanced technology, soundproof pods, and collaborative work areas for students.",
+            tag: "Campus",
+            imagePath: "/images/article-12.jpg"
+        },
+        {
+            title: "Medical Research Team Makes COVID-19 Breakthrough",
+            body: "University researchers contribute to significant advances in understanding virus transmission patterns and developing improved prevention strategies.",
+            tag: "Research",
+            imagePath: "/images/article-13.jpg"
+        },
+        {
+            title: "International Food Festival Celebrates Diversity",
+            body: "Students from over 40 countries showcased their cultural heritage through traditional cuisine, music, and performances at the annual diversity celebration.",
+            tag: "Events",
+            imagePath: "/images/article-14.jpg"
+        },
+        {
+            title: "Robotics Club Wins Regional Competition",
+            body: "The university robotics team secured first place in the regional competition with their innovative autonomous robot design and flawless performance.",
+            tag: "Technology",
+            imagePath: "/images/article-15.jpg"
         }
     ];
 

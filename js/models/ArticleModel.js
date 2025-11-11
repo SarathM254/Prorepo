@@ -5,8 +5,9 @@
 const ArticleModel = {
     articles: [],
     cursor: 0,
-    articlesPerPage: 6,
+    articlesPerPage: 5, // Reduced for smoother scrolling experience
     desktopArticlesLimit: 9,
+    hasLoopedOnce: false, // Track if we've looped through articles
     
     /**
      * Fetches articles from the backend API
@@ -44,6 +45,40 @@ const ArticleModel = {
             this.cursor++;
         }
         return batch;
+    },
+
+    /**
+     * Shuffles the articles array (excluding the first featured article)
+     * Used for infinite scroll to show articles in random order
+     */
+    shuffleArticles() {
+        if (this.articles.length <= 1) return;
+        
+        // Keep the first article (featured) in place, shuffle the rest
+        const featuredArticle = this.articles[0];
+        const otherArticles = this.articles.slice(1);
+        
+        // Fisher-Yates shuffle algorithm
+        for (let i = otherArticles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [otherArticles[i], otherArticles[j]] = [otherArticles[j], otherArticles[i]];
+        }
+        
+        // Reconstruct array with featured article first
+        this.articles = [featuredArticle, ...otherArticles];
+        
+        // Reset cursor to start loading from position 1 (after featured)
+        this.cursor = 1;
+        this.hasLoopedOnce = true;
+        
+        console.log("Articles shuffled for infinite scroll");
+    },
+
+    /**
+     * Resets the loop state
+     */
+    resetLoop() {
+        this.hasLoopedOnce = false;
     },
 
     /**
