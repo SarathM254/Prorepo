@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 // Create database connection
 const dbPath = path.join(__dirname, 'proto.db');
@@ -72,7 +73,6 @@ function initializeDatabase() {
                 if (err) {
                     console.error('Error checking admin user:', err);
                 } else if (row.count === 0) {
-                    const bcrypt = require('bcryptjs');
                     const hashedPassword = bcrypt.hashSync('admin123', 10);
                     
                     db.run(`
@@ -109,92 +109,92 @@ function addSampleArticles() {
         {
             title: "Campus Innovation Lab Opens New Research Wing",
             body: "The university's new research facility promises to revolutionize student research opportunities with state-of-the-art equipment and collaborative spaces.",
-            tag: "Breaking News",
-            imagePath: "/images/article-1.jpg"
+            tag: "Campus",
+            imagePath: "/uploads/article-1762767290577-874302685.png"
         },
         {
             title: "Basketball Team Wins Championship",
             body: "Our university basketball team secured their first championship in five years with a thrilling overtime victory. The final score was 78-75.",
             tag: "Sports",
-            imagePath: "/images/article-2.jpg"
+            imagePath: "/uploads/article-1762939385038-344957785.jpg"
         },
         {
             title: "New Computer Science Program Launched",
             body: "The university introduces a cutting-edge AI and Machine Learning specialization track for computer science students.",
-            tag: "Academics",
-            imagePath: "/images/article-3.jpg"
+            tag: "Campus",
+            imagePath: "/uploads/article-1762939443134-576020290.jpg"
         },
         {
             title: "Spring Festival 2024: A Grand Success",
             body: "Students and faculty came together for the annual spring festival featuring cultural performances, food stalls, and art exhibitions.",
-            tag: "Campus Life",
-            imagePath: "/images/article-4.jpg"
+            tag: "Events",
+            imagePath: "/uploads/article-1762767290577-874302685.png"
         },
         {
             title: "Student Develops Revolutionary App",
             body: "Computer science student creates an app that helps students find study groups and collaborative learning opportunities.",
-            tag: "Technology",
-            imagePath: "/images/article-5.jpg"
+            tag: "Opinion",
+            imagePath: "/uploads/article-1762939385038-344957785.jpg"
         },
         {
             title: "Breakthrough in Renewable Energy Research",
             body: "University researchers make significant progress in developing more efficient solar panel technology with improved efficiency rates.",
-            tag: "Research",
-            imagePath: "/images/article-6.jpg"
+            tag: "Campus",
+            imagePath: "/uploads/article-1762939443134-576020290.jpg"
         },
         {
             title: "New Student Center Opens Doors",
             body: "The newly constructed student center offers modern facilities including study rooms, recreational areas, and dining options.",
-            tag: "Student Life",
-            imagePath: "/images/article-7.jpg"
+            tag: "Campus",
+            imagePath: "/uploads/article-1762767290577-874302685.png"
         },
         {
             title: "Environmental Club Launches Campus Green Initiative",
             body: "Student-led environmental group introduces new recycling programs and sustainability workshops to promote eco-friendly practices on campus.",
             tag: "Campus",
-            imagePath: "/images/article-8.jpg"
+            imagePath: "/uploads/article-1762939385038-344957785.jpg"
         },
         {
             title: "Drama Society's Winter Performance Sold Out",
             body: "The annual winter theater production received rave reviews with all shows completely sold out. Students showcased exceptional talent in acting and stage production.",
             tag: "Events",
-            imagePath: "/images/article-9.jpg"
+            imagePath: "/uploads/article-1762939443134-576020290.jpg"
         },
         {
             title: "Career Fair Attracts Top Tech Companies",
             body: "Over 50 leading technology companies participated in this year's career fair, offering internships and full-time positions to graduating students.",
             tag: "Campus",
-            imagePath: "/images/article-10.jpg"
+            imagePath: "/uploads/article-1762767290577-874302685.png"
         },
         {
             title: "University Debate Team Takes National Title",
             body: "Our debate team emerged victorious in the national championship, defeating teams from prestigious universities across the country.",
             tag: "Sports",
-            imagePath: "/images/article-11.jpg"
+            imagePath: "/uploads/article-1762939385038-344957785.jpg"
         },
         {
             title: "New Library Wing Features Smart Study Pods",
             body: "The library expansion includes innovative study spaces with advanced technology, soundproof pods, and collaborative work areas for students.",
             tag: "Campus",
-            imagePath: "/images/article-12.jpg"
+            imagePath: "/uploads/article-1762939443134-576020290.jpg"
         },
         {
             title: "Medical Research Team Makes COVID-19 Breakthrough",
             body: "University researchers contribute to significant advances in understanding virus transmission patterns and developing improved prevention strategies.",
-            tag: "Research",
-            imagePath: "/images/article-13.jpg"
+            tag: "Opinion",
+            imagePath: "/uploads/article-1762767290577-874302685.png"
         },
         {
             title: "International Food Festival Celebrates Diversity",
             body: "Students from over 40 countries showcased their cultural heritage through traditional cuisine, music, and performances at the annual diversity celebration.",
             tag: "Events",
-            imagePath: "/images/article-14.jpg"
+            imagePath: "/uploads/article-1762939385038-344957785.jpg"
         },
         {
             title: "Robotics Club Wins Regional Competition",
             body: "The university robotics team secured first place in the regional competition with their innovative autonomous robot design and flawless performance.",
-            tag: "Technology",
-            imagePath: "/images/article-15.jpg"
+            tag: "Opinion",
+            imagePath: "/uploads/article-1762939443134-576020290.jpg"
         }
     ];
 
@@ -233,7 +233,6 @@ function authenticateUser(email, password) {
                     // User not found
                     resolve({ error: 'email' });
                 } else {
-                    const bcrypt = require('bcryptjs');
                     // User found, check password
                     if (bcrypt.compareSync(password, user.password)) {
                         resolve({ user: user });
@@ -249,7 +248,6 @@ function authenticateUser(email, password) {
 
 function createUser(name, email, password) {
     return new Promise((resolve, reject) => {
-        const bcrypt = require('bcryptjs');
         const hashedPassword = bcrypt.hashSync(password, 10);
         
         db.run(
@@ -366,7 +364,7 @@ function cleanupExpiredSessions() {
 function createArticle(userId, title, body, tag, imagePath) {
     return new Promise((resolve, reject) => {
         db.run(
-            "INSERT INTO articles (user_id, title, body, tag, image_path) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO articles (user_id, title, body, tag, image_path, status) VALUES (?, ?, ?, ?, ?, 'approved')",
             [userId, title, body, tag, imagePath],
             function(err) {
                 if (err) {

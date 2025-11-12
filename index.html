@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/navigation.css">
     <link rel="stylesheet" href="css/cards.css">
     <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/image-adjustment.css">
     <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="css/footer.css">
     <link rel="stylesheet" href="css/loading.css">
@@ -94,11 +95,34 @@
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>Click to upload or drag and drop</p>
                         <p class="file-info">PNG, JPG, GIF up to 5MB</p>
-                        <input type="file" id="articleImage" name="image" accept="image/*" required>
+                        <input type="file" id="articleImage" name="image" accept="image/*" required style="display: none;">
                     </div>
-                    <div class="image-preview" id="imagePreview" style="display: none;">
-                        <img id="previewImg" src="" alt="Preview">
-                        <button type="button" id="removeImage">Remove</button>
+                    
+                    <!-- Simple Image Adjustment Area -->
+                    <div class="image-adjustment-area" id="imageAdjustmentArea" style="display: none;">
+                        <div class="image-container-with-grid">
+                            <img id="adjustableImage" src="" alt="Adjustable image">
+                            <div class="grid-overlay">
+                                <div class="grid-line grid-line-h" style="top: 33.33%"></div>
+                                <div class="grid-line grid-line-h" style="top: 66.66%"></div>
+                                <div class="grid-line grid-line-v" style="left: 33.33%"></div>
+                                <div class="grid-line grid-line-v" style="left: 66.66%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="adjustment-controls">
+                            <div class="zoom-control">
+                                <label><i class="fas fa-search-minus"></i></label>
+                                <input type="range" id="imageZoomSlider" min="100" max="200" value="100" step="1" class="zoom-slider">
+                                <label><i class="fas fa-search-plus"></i></label>
+                            </div>
+                            <div class="adjustment-hint">
+                                <i class="fas fa-hand-pointer"></i> Drag to reposition • Pinch or slide to zoom
+                            </div>
+                            <button type="button" class="remove-image-btn" id="removeImage">
+                                <i class="fas fa-trash"></i> Remove Image
+                            </button>
+                        </div>
                     </div>
                 </div>
 

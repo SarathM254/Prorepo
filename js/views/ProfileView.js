@@ -114,8 +114,10 @@ const ProfileView = {
      */
     updateProfileButton(user) {
         const profileBtnSpan = document.querySelector('.bottom-nav .nav-item:last-child span');
-        if (profileBtnSpan) {
+        if (profileBtnSpan && user && user.name) {
             profileBtnSpan.textContent = user.name.split(' ')[0];
+        } else if (profileBtnSpan) {
+            profileBtnSpan.textContent = 'Profile';
         }
     },
 

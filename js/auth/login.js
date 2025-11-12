@@ -48,7 +48,7 @@ async function login(email, password) {
         const data = await response.json();
 
         if (response.ok) {
-            window.location.href = 'http://localhost:3000/';
+            window.location.href = '/';
         } else {
             if (response.status === 404) {
                 showError(data.error, 'email');
@@ -105,7 +105,7 @@ async function register(name, email, password) {
             `;
             
             setTimeout(() => {
-                window.location.href = 'http://localhost:3000/';
+                window.location.href = '/';
             }, 2000);
         } else {
             showError(data.error || 'Registration failed', 'regEmail');

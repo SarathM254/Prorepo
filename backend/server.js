@@ -79,7 +79,6 @@ app.use(express.static(path.join(__dirname, '..'), {
 }));
 
 // Serve uploaded images
-app.use('/images', express.static(path.join(__dirname, '..', 'images')));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Authentication middleware
@@ -285,6 +284,9 @@ app.post('/api/articles', requireAuth, upload.single('image'), async (req, res) 
         const imagePath = `/uploads/${req.file.filename}`;
         const article = await db.createArticle(req.session.userId, title, body, tag, imagePath);
         
+        // Get user info to include in response
+        const user = await db.getUserById(req.session.userId);
+        
         res.json({
             success: true,
             article: {
@@ -292,7 +294,9 @@ app.post('/api/articles', requireAuth, upload.single('image'), async (req, res) 
                 title: article.title,
                 body: article.body,
                 tag: article.tag,
-                imagePath: article.imagePath
+                image_path: imagePath,
+                author_name: user.name,
+                created_at: new Date().toISOString()
             }
         });
     } catch (error) {

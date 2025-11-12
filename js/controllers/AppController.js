@@ -86,8 +86,8 @@ const AppController = {
         const isMobile = this.isMobileView();
         console.log(`renderContentBasedOnView: isMobile = ${isMobile}`);
         
-        // Reset cursor and loop state for fresh rendering
-        ArticleModel.cursor = 1;
+        // Reset cursor and loop state for fresh rendering (start from 0 now, no featured article)
+        ArticleModel.cursor = 0;
         ArticleModel.resetLoop();
         
         ArticleView.renderInitialLayout(articles, isMobile);
@@ -194,6 +194,7 @@ const AppController = {
     setupFileUploadListeners() {
         const { fileUploadArea, articleImage, removeImage } = FormView.elements;
         
+        // File upload area click
         if (fileUploadArea) {
             fileUploadArea.addEventListener('click', () => articleImage.click());
             fileUploadArea.addEventListener('dragover', (e) => {
@@ -212,24 +213,24 @@ const AppController = {
                 fileUploadArea.style.background = '#f8f9ff';
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    FormView.handleImagePreview(files[0]);
+                    FormView.handleImageSelection(files[0]);
                 }
             });
         }
         
+        // File input change
         if (articleImage) {
             articleImage.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
-                    FormView.handleImagePreview(e.target.files[0]);
+                    FormView.handleImageSelection(e.target.files[0]);
                 }
             });
         }
         
+        // Remove image button
         if (removeImage) {
             removeImage.addEventListener('click', () => {
-                FormView.elements.imagePreview.style.display = 'none';
-                FormView.elements.fileUploadArea.style.display = 'block';
-                FormView.elements.articleImage.value = '';
+                FormView.removeSelectedImage();
             });
         }
     },
@@ -414,20 +415,28 @@ const AppController = {
     async handleArticleSubmission(e) {
         e.preventDefault();
         
-        const formData = new FormData(FormView.elements.articleForm);
+        const form = FormView.elements.articleForm;
+        const title = form.querySelector('#articleTitle').value;
+        const body = form.querySelector('#articleBody').value;
+        const tag = form.querySelector('#articleTag').value;
         
         // Validation
-        if (!formData.get('title') || !formData.get('body') || !formData.get('tag') || !formData.get('image')) {
+        if (!title || !body || !tag) {
             alert('Please fill in all required fields');
             return;
         }
 
-        if (formData.get('title').length > 100) {
+        if (!FormView.getCurrentImageFile()) {
+            alert('Please select an image');
+            return;
+        }
+
+        if (title.length > 100) {
             alert('Title must be 100 characters or less');
             return;
         }
 
-        if (formData.get('body').length > 450) {
+        if (body.length > 450) {
             alert('Article body must be 450 characters or less');
             return;
         }
@@ -435,17 +444,34 @@ const AppController = {
         FormView.setSubmitting(true);
 
         try {
+            // Get adjusted image blob
+            const adjustedBlob = await FormView.getAdjustedImageBlob();
+            
+            if (!adjustedBlob) {
+                alert('Please select an image');
+                FormView.setSubmitting(false);
+                return;
+            }
+            
+            // Create new FormData with adjusted image
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('body', body);
+            formData.append('tag', tag);
+            formData.append('image', adjustedBlob, 'article-image.jpg');
+            
             await ArticleModel.submitArticle(formData);
-            alert('Article submitted successfully! It will be reviewed before being published.');
+            alert('Article submitted successfully! Your article is now live.');
             FormView.closeArticleFormModal();
             
-            // Reload articles
+            // Reload articles to include the new one
             const articles = await ArticleModel.fetchArticles();
             if (articles !== null) {
+                // Reset cursor and re-render
                 this.renderContentBasedOnView(articles);
             }
         } catch (error) {
-            alert(error.message || 'Failed to submit article');
+            alert(error.message || 'Failed to submit article. Please try again.');
             console.error('Article submission error:', error);
             FormView.setSubmitting(false);
         }

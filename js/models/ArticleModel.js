@@ -48,27 +48,20 @@ const ArticleModel = {
     },
 
     /**
-     * Shuffles the articles array (excluding the first featured article)
+     * Shuffles the articles array
      * Used for infinite scroll to show articles in random order
      */
     shuffleArticles() {
-        if (this.articles.length <= 1) return;
+        if (this.articles.length === 0) return;
         
-        // Keep the first article (featured) in place, shuffle the rest
-        const featuredArticle = this.articles[0];
-        const otherArticles = this.articles.slice(1);
-        
-        // Fisher-Yates shuffle algorithm
-        for (let i = otherArticles.length - 1; i > 0; i--) {
+        // Shuffle all articles using Fisher-Yates algorithm
+        for (let i = this.articles.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [otherArticles[i], otherArticles[j]] = [otherArticles[j], otherArticles[i]];
+            [this.articles[i], this.articles[j]] = [this.articles[j], this.articles[i]];
         }
         
-        // Reconstruct array with featured article first
-        this.articles = [featuredArticle, ...otherArticles];
-        
-        // Reset cursor to start loading from position 1 (after featured)
-        this.cursor = 1;
+        // Reset cursor to start loading from position 0
+        this.cursor = 0;
         this.hasLoopedOnce = true;
         
         console.log("Articles shuffled for infinite scroll");
@@ -83,11 +76,11 @@ const ArticleModel = {
 
     /**
      * Gets a fixed number of articles for desktop view
-     * @returns {Array} Desktop articles (excluding featured)
+     * @returns {Array} Desktop articles
      */
     getDesktopArticles() {
-        const endIndex = Math.min(this.articles.length, this.desktopArticlesLimit + 1);
-        return this.articles.slice(1, endIndex);
+        const endIndex = Math.min(this.articles.length, this.desktopArticlesLimit);
+        return this.articles.slice(0, endIndex);
     },
 
     /**

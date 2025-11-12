@@ -68,10 +68,8 @@ const ArticleView = {
             return;
         }
 
-        // Always render the first article as featured
-        const featuredArticle = articles[0];
-        this.elements.featuredStory.innerHTML = this.createArticleHTML(featuredArticle, true);
-        this.elements.featuredStory.style.display = 'block';
+        // Hide featured story section
+        this.elements.featuredStory.style.display = 'none';
 
         if (isMobileView) {
             const initialBatch = ArticleModel.getNextBatch();
@@ -79,7 +77,8 @@ const ArticleView = {
             this.renderArticleGrid(initialBatch);
             this.elements.newsGrid.style.display = 'grid';
         } else {
-            const desktopArticles = ArticleModel.getDesktopArticles();
+            // Show all articles in grid (no featured article)
+            const desktopArticles = ArticleModel.articles.slice(0, ArticleModel.desktopArticlesLimit);
             this.elements.newsGrid.innerHTML = '';
             desktopArticles.forEach(article => {
                 const articleEl = document.createElement('div');

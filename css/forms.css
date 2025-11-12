@@ -148,32 +148,7 @@
     cursor: pointer;
 }
 
-.image-preview {
-    margin-top: 1rem;
-    text-align: center;
-}
-
-.image-preview img {
-    max-width: 100%;
-    max-height: 200px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.image-preview button {
-    margin-top: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-.image-preview button:hover {
-    background: #c0392b;
-}
+/* Image preview removed - now using full-screen crop modal */
 
 .form-actions {
     display: flex;
