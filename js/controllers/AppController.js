@@ -59,12 +59,20 @@ const AppController = {
             if (data.authenticated) {
                 ProfileView.updateProfileButton(data.user);
             } else {
-                console.log("Not authenticated, redirecting to /login.html");
-                window.location.href = '/login.html';
+                // In demo mode, show default user instead of redirecting
+                console.log("Not authenticated - using demo mode");
+                ProfileView.updateProfileButton({
+                    name: 'Demo User',
+                    email: 'demo@proto.com'
+                });
             }
         } catch (error) {
             console.error('Auth check failed:', error);
-            window.location.href = '/login.html';
+            // In demo mode, continue with default user
+            ProfileView.updateProfileButton({
+                name: 'Demo User',
+                email: 'demo@proto.com'
+            });
         }
     },
 
@@ -312,12 +320,15 @@ const AppController = {
                 ProfileView.renderProfileModal(user);
                 this.setupProfileModalListeners();
             } else {
-                ProfileView.closeProfileModal();
-                window.location.href = '/login.html';
+                // In demo mode, show default profile
+                ProfileView.renderProfileModal({
+                    name: 'Demo User',
+                    email: 'demo@proto.com'
+                });
+                this.setupProfileModalListeners();
             }
         } catch (error) {
             ProfileView.showProfileError('Failed to load profile.');
-            ProfileView.closeProfileModal();
             console.error('Profile load error:', error);
         }
     },
@@ -386,6 +397,7 @@ const AppController = {
      */
     async handleLogout() {
         if (await ArticleModel.logout()) {
+            // Redirect to login page
             window.location.href = '/login.html';
         } else {
             ProfileView.showProfileError('Failed to log out.');

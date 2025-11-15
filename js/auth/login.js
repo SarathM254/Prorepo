@@ -3,8 +3,8 @@
  * Handles login and registration functionality
  */
 
-// Check if user is already logged in
-checkAuthStatus();
+// Note: Auth check disabled for demo mode
+// In production, uncomment checkAuthStatus() to redirect if already logged in
 
 /**
  * Checks if user is authenticated
