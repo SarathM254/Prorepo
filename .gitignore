@@ -33,3 +33,6 @@ build/
 *.tmp
 .cache/
 
+# Batch files (local development only)
+*.bat
+
