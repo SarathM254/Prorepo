@@ -45,12 +45,19 @@ export default function handler(req, res) {
     }
 
     // Find user
-    const user = DEMO_USERS.find(u => u.email === email && u.password === password);
+    const user = DEMO_USERS.find(u => u.email === email);
 
     if (!user) {
+        return res.status(404).json({
+            success: false,
+            error: 'Email not found'
+        });
+    }
+
+    if (user.password !== password) {
         return res.status(401).json({
             success: false,
-            error: 'Invalid credentials'
+            error: 'Incorrect password'
         });
     }
 

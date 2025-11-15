@@ -15,14 +15,15 @@ export default function handler(req, res) {
         return;
     }
 
-    // For demo purposes, return authenticated with demo user
-    // In production, check JWT token or session
+    // For demo purposes, always return authenticated
+    // In production, check JWT token or session from cookies/headers
+    // Since Vercel serverless is stateless, proper auth requires external auth service or JWT
     res.status(200).json({
         authenticated: true,
         user: {
             id: 1,
-            name: 'Admin User',
-            email: 'admin@proto.com'
+            name: 'Demo User',
+            email: 'demo@proto.com'
         }
     });
 }

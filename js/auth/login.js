@@ -15,7 +15,7 @@ async function checkAuthStatus() {
         const data = await response.json();
         
         if (data.authenticated) {
-            window.location.href = '/';
+            window.location.href = '/index.html';
         }
     } catch (error) {
         console.error('Auth check failed:', error);
@@ -48,7 +48,7 @@ async function login(email, password) {
         const data = await response.json();
 
         if (response.ok) {
-            window.location.href = '/';
+            window.location.href = '/index.html';
         } else {
             if (response.status === 404) {
                 showError(data.error, 'email');
@@ -105,7 +105,7 @@ async function register(name, email, password) {
             `;
             
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/index.html';
             }, 2000);
         } else {
             showError(data.error || 'Registration failed', 'regEmail');

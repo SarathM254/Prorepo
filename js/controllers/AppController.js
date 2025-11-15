@@ -59,12 +59,12 @@ const AppController = {
             if (data.authenticated) {
                 ProfileView.updateProfileButton(data.user);
             } else {
-                console.log("Not authenticated, redirecting to /login");
-                window.location.href = '/login';
+                console.log("Not authenticated, redirecting to /login.html");
+                window.location.href = '/login.html';
             }
         } catch (error) {
             console.error('Auth check failed:', error);
-            window.location.href = '/login';
+            window.location.href = '/login.html';
         }
     },
 
@@ -313,7 +313,7 @@ const AppController = {
                 this.setupProfileModalListeners();
             } else {
                 ProfileView.closeProfileModal();
-                window.location.href = '/login';
+                window.location.href = '/login.html';
             }
         } catch (error) {
             ProfileView.showProfileError('Failed to load profile.');
@@ -386,7 +386,7 @@ const AppController = {
      */
     async handleLogout() {
         if (await ArticleModel.logout()) {
-            window.location.href = '/login';
+            window.location.href = '/login.html';
         } else {
             ProfileView.showProfileError('Failed to log out.');
         }
