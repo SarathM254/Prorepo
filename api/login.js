@@ -62,6 +62,9 @@ export default function handler(req, res) {
     }
 
     // In production, create JWT token or session
+    // For demo, create simple token: "email:name"
+    const token = `${encodeURIComponent(user.email)}:${encodeURIComponent(user.name)}`;
+    
     const userResponse = {
         id: user.id,
         name: user.name,
@@ -71,6 +74,7 @@ export default function handler(req, res) {
     res.status(200).json({
         success: true,
         user: userResponse,
+        token: token,
         message: 'Login successful'
     });
 }

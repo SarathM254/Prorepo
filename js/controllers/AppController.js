@@ -61,27 +61,35 @@ const AppController = {
      */
     async checkAuthStatus() {
         console.log("AppController.checkAuthStatus() called.");
+        
+        // Check if user has auth token in localStorage
+        const authToken = localStorage.getItem('authToken');
+        
+        if (!authToken) {
+            console.log("No auth token found - redirecting to login");
+            window.location.href = '/login.html';
+            return;
+        }
+        
         try {
-            const response = await fetch('/api/auth/status');
+            const response = await fetch('/api/auth/status', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
             const data = await response.json();
             
             if (data.authenticated) {
                 ProfileView.updateProfileButton(data.user);
             } else {
-                // In demo mode, show default user instead of redirecting
-                console.log("Not authenticated - using demo mode");
-                ProfileView.updateProfileButton({
-                    name: 'Demo User',
-                    email: 'demo@proto.com'
-                });
+                console.log("Not authenticated - redirecting to login");
+                localStorage.removeItem('authToken');
+                window.location.href = '/login.html';
             }
         } catch (error) {
             console.error('Auth check failed:', error);
-            // In demo mode, continue with default user
-            ProfileView.updateProfileButton({
-                name: 'Demo User',
-                email: 'demo@proto.com'
-            });
+            localStorage.removeItem('authToken');
+            window.location.href = '/login.html';
         }
     },
 
@@ -406,6 +414,8 @@ const AppController = {
      */
     async handleLogout() {
         if (await ArticleModel.logout()) {
+            // Clear auth token
+            localStorage.removeItem('authToken');
             // Redirect to login page
             window.location.href = '/login.html';
         } else {

@@ -3,24 +3,37 @@
  * Handles login and registration functionality
  */
 
-// Note: Auth check disabled for demo mode
-// In production, uncomment checkAuthStatus() to redirect if already logged in
-
 /**
  * Checks if user is authenticated
  */
 async function checkAuthStatus() {
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!authToken) {
+        return; // Not logged in, stay on login page
+    }
+    
     try {
-        const response = await fetch('/api/auth/status');
+        const response = await fetch('/api/auth/status', {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
         const data = await response.json();
         
         if (data.authenticated) {
             window.location.href = '/index.html';
+        } else {
+            localStorage.removeItem('authToken');
         }
     } catch (error) {
         console.error('Auth check failed:', error);
+        localStorage.removeItem('authToken');
     }
 }
+
+// Check auth status on page load
+checkAuthStatus();
 
 /**
  * Handles user login
@@ -48,6 +61,10 @@ async function login(email, password) {
         const data = await response.json();
 
         if (response.ok) {
+            // Store auth token in localStorage
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+            }
             window.location.href = '/index.html';
         } else {
             if (response.status === 404) {
@@ -94,6 +111,11 @@ async function register(name, email, password) {
         const data = await response.json();
 
         if (response.ok) {
+            // Store auth token in localStorage
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+            }
+            
             document.querySelector('.login-container').innerHTML = `
                 <div class="logo">
                     <h1>Proto</h1>

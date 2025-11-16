@@ -57,6 +57,9 @@ export default function handler(req, res) {
 
     DEMO_USERS.push(newUser);
 
+    // Create auth token
+    const token = `${encodeURIComponent(newUser.email)}:${encodeURIComponent(newUser.name)}`;
+
     const userResponse = {
         id: newUser.id,
         name: newUser.name,
@@ -66,6 +69,7 @@ export default function handler(req, res) {
     res.status(201).json({
         success: true,
         user: userResponse,
+        token: token,
         message: 'Registration successful'
     });
 }
