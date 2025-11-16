@@ -139,11 +139,11 @@ export default async function handler(req, res) {
     // POST - Create new article
     if (req.method === 'POST') {
         console.log('📤 [API] POST request - creating article');
-        console.log('📦 [API] Request body:', req.body);
+        console.log('📦 [API] Request body keys:', Object.keys(req.body || {}));
         
         try {
-            const { title, body, tag } = req.body;
-            console.log('📝 [API] Received data - title:', title, 'tag:', tag);
+            const { title, body, tag, imageData } = req.body;
+            console.log('📝 [API] Received data - title:', title, 'tag:', tag, 'hasImage:', !!imageData);
 
             if (!title || !body || !tag) {
                 console.error('❌ [API] Missing required fields');
@@ -153,12 +153,14 @@ export default async function handler(req, res) {
                 });
             }
 
+            // In production, you would upload imageData to cloud storage (S3, Cloudinary, etc.)
+            // For demo, we use the base64 data directly or a placeholder
             const newArticle = {
                 id: articles.length + 1,
                 title,
                 body,
                 tag,
-                image_path: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop', // In production, handle file uploads
+                image_path: imageData || 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&h=600&fit=crop',
                 author_name: 'Demo User',
                 created_at: new Date().toISOString()
             };

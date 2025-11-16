@@ -165,21 +165,26 @@ const ArticleModel = {
 
     /**
      * Submits a new article
-     * @param {FormData} formData - Article form data
+     * @param {Object} articleData - Article data (title, body, tag, imageData)
      * @returns {Promise<Object>} Submitted article
      */
-    async submitArticle(formData) {
+    async submitArticle(articleData) {
         try {
             console.log('📤 [ArticleModel] Submitting article to /api/articles...');
-            console.log('📝 [ArticleModel] FormData entries:');
-            for (let pair of formData.entries()) {
-                console.log(`  - ${pair[0]}:`, pair[1]);
-            }
+            console.log('📝 [ArticleModel] Article data:', {
+                title: articleData.title,
+                tag: articleData.tag,
+                bodyLength: articleData.body?.length,
+                hasImage: !!articleData.imageData
+            });
             
             const response = await fetch('/api/articles', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 credentials: 'include',
-                body: formData
+                body: JSON.stringify(articleData)
             });
             
             console.log('📡 [ArticleModel] Submit response status:', response.status, response.statusText);

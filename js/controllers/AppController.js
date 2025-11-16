@@ -504,16 +504,26 @@ const AppController = {
                 return;
             }
             
-            // Create new FormData with adjusted image
-            console.log('📦 [AppController] Creating FormData...');
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('body', body);
-            formData.append('tag', tag);
-            formData.append('image', adjustedBlob, 'article-image.jpg');
-            console.log('✅ [AppController] FormData created, submitting...');
+            // Convert blob to base64 for JSON transmission
+            console.log('🔄 [AppController] Converting image to base64...');
+            const base64Image = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(adjustedBlob);
+            });
+            console.log('✅ [AppController] Image converted to base64');
             
-            await ArticleModel.submitArticle(formData);
+            // Create JSON payload
+            console.log('📦 [AppController] Creating JSON payload...');
+            const payload = {
+                title,
+                body,
+                tag,
+                imageData: base64Image
+            };
+            console.log('✅ [AppController] Payload created, submitting...');
+            
+            await ArticleModel.submitArticle(payload);
             console.log('✅ [AppController] Article submitted successfully!');
             alert('Article submitted successfully! Your article is now live.');
             FormView.closeArticleFormModal();
