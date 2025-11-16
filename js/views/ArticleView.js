@@ -57,6 +57,10 @@ const ArticleView = {
      * @param {boolean} isMobileView - Whether it's mobile view
      */
     renderInitialLayout(articles, isMobileView) {
+        console.log('🎨 [ArticleView] renderInitialLayout called');
+        console.log('📊 [ArticleView] Articles received:', articles?.length || 0);
+        console.log('📱 [ArticleView] Is mobile view:', isMobileView);
+        
         this.elements.loadingContainer.style.display = 'none';
         
         // Clean up any existing loading indicators
@@ -64,6 +68,7 @@ const ArticleView = {
         if (existingIndicator) existingIndicator.remove();
         
         if (!articles || articles.length === 0) {
+            console.warn('⚠️ [ArticleView] No articles to render, showing empty state');
             this.renderEmptyState();
             return;
         }
@@ -73,12 +78,14 @@ const ArticleView = {
 
         if (isMobileView) {
             const initialBatch = ArticleModel.getNextBatch();
+            console.log('📱 [ArticleView] Mobile: Rendering initial batch of', initialBatch.length, 'articles');
             this.elements.newsGrid.innerHTML = '';
             this.renderArticleGrid(initialBatch);
             this.elements.newsGrid.style.display = 'grid';
         } else {
             // Show all articles in grid (no featured article)
             const desktopArticles = ArticleModel.articles.slice(0, ArticleModel.desktopArticlesLimit);
+            console.log('💻 [ArticleView] Desktop: Rendering', desktopArticles.length, 'articles');
             this.elements.newsGrid.innerHTML = '';
             desktopArticles.forEach(article => {
                 const articleEl = document.createElement('div');
@@ -88,6 +95,7 @@ const ArticleView = {
             });
             this.elements.newsGrid.style.display = 'grid';
         }
+        console.log('✅ [ArticleView] Initial layout rendered');
     },
 
     /**
@@ -112,12 +120,16 @@ const ArticleView = {
      * @returns {string} HTML string
      */
     createArticleHTML(article, isFeatured) {
+        console.log('🔨 [ArticleView] Creating HTML for article:', article.id, article.title);
+        console.log('🖼️ [ArticleView] Image path:', article.image_path);
+        console.log('✍️ [ArticleView] Author:', article.author_name);
+        
         const timeAgo = Helpers.getTimeAgo(article.created_at);
         const titleTag = isFeatured ? 'h2' : 'h3';
         
         return `
             <div class="card-image">
-                <img src="${article.image_path}" alt="${article.title}" loading="lazy">
+                <img src="${article.image_path}" alt="${article.title}" loading="lazy" onerror="console.error('❌ Image failed to load:', '${article.image_path}')">
                 <div class="card-category">${article.tag}</div>
             </div>
             <div class="card-content">

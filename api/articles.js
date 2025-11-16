@@ -99,6 +99,10 @@ let articles = [
 ];
 
 export default async function handler(req, res) {
+    console.log('=== 📡 [API] Articles endpoint called ===');
+    console.log('🔧 [API] Method:', req.method);
+    console.log('🌐 [API] URL:', req.url);
+    
     // Enable CORS
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -106,24 +110,35 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
     if (req.method === 'OPTIONS') {
+        console.log('✅ [API] OPTIONS request handled');
         res.status(200).end();
         return;
     }
 
     // GET - Fetch all articles
     if (req.method === 'GET') {
+        console.log('📥 [API] GET request - fetching articles');
+        console.log('📊 [API] Total articles available:', articles.length);
+        const sortedArticles = articles.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        console.log('🖼️ [API] First article:', sortedArticles[0]);
+        console.log('✅ [API] Sending', sortedArticles.length, 'articles');
         return res.status(200).json({
             success: true,
-            articles: articles.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            articles: sortedArticles
         });
     }
 
     // POST - Create new article
     if (req.method === 'POST') {
+        console.log('📤 [API] POST request - creating article');
+        console.log('📦 [API] Request body:', req.body);
+        
         try {
             const { title, body, tag } = req.body;
+            console.log('📝 [API] Received data - title:', title, 'tag:', tag);
 
             if (!title || !body || !tag) {
+                console.error('❌ [API] Missing required fields');
                 return res.status(400).json({
                     success: false,
                     error: 'Title, body, and tag are required'
@@ -141,6 +156,8 @@ export default async function handler(req, res) {
             };
 
             articles.push(newArticle);
+            console.log('✅ [API] Article created successfully:', newArticle.id);
+            console.log('📊 [API] Total articles now:', articles.length);
 
             return res.status(201).json({
                 success: true,
@@ -148,6 +165,7 @@ export default async function handler(req, res) {
                 message: 'Article created successfully'
             });
         } catch (error) {
+            console.error('❌ [API] Error creating article:', error);
             return res.status(500).json({
                 success: false,
                 error: 'Failed to create article'
@@ -155,6 +173,7 @@ export default async function handler(req, res) {
         }
     }
 
+    console.error('❌ [API] Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
 }
 

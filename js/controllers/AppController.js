@@ -27,23 +27,32 @@ const AppController = {
      * Called when DOM is ready
      */
     async onDOMReady() {
-        console.log("DOMContentLoaded fired.");
+        console.log("=== 🚀 [AppController] DOMContentLoaded fired ===");
         
         // Initialize views
+        console.log("🔧 [AppController] Initializing views...");
         ArticleView.init();
         FormView.init();
+        console.log("✅ [AppController] Views initialized");
         
         // Perform initial authentication check
+        console.log("🔐 [AppController] Checking auth status...");
         await this.checkAuthStatus();
+        console.log("✅ [AppController] Auth check complete");
 
+        console.log("📰 [AppController] Fetching articles...");
         const articles = await ArticleModel.fetchArticles();
+        
         if (articles === null) {
+            console.error("❌ [AppController] Failed to fetch articles, showing error state");
             ArticleView.renderErrorState();
         } else {
+            console.log("✅ [AppController] Articles fetched successfully:", articles.length);
             this.lastIsMobileView = this.isMobileView();
             this.renderContentBasedOnView(articles);
             this.setupEventListeners();
             window.addEventListener('resize', this.handleResize.bind(this));
+            console.log("=== ✅ [AppController] Initialization complete ===");
         }
     },
 
@@ -426,65 +435,83 @@ const AppController = {
      */
     async handleArticleSubmission(e) {
         e.preventDefault();
+        console.log('=== 📝 [AppController] Article submission started ===');
         
         const form = FormView.elements.articleForm;
         const title = form.querySelector('#articleTitle').value;
         const body = form.querySelector('#articleBody').value;
         const tag = form.querySelector('#articleTag').value;
         
+        console.log('📋 [AppController] Form data:', { title, body: body.substring(0, 50) + '...', tag });
+        
         // Validation
         if (!title || !body || !tag) {
+            console.error('❌ [AppController] Missing required fields');
             alert('Please fill in all required fields');
             return;
         }
 
         if (!FormView.getCurrentImageFile()) {
+            console.error('❌ [AppController] No image selected');
             alert('Please select an image');
             return;
         }
 
         if (title.length > 100) {
+            console.error('❌ [AppController] Title too long:', title.length);
             alert('Title must be 100 characters or less');
             return;
         }
 
         if (body.length > 450) {
+            console.error('❌ [AppController] Body too long:', body.length);
             alert('Article body must be 450 characters or less');
             return;
         }
 
+        console.log('✅ [AppController] Validation passed, preparing submission...');
         FormView.setSubmitting(true);
 
         try {
             // Get adjusted image blob
+            console.log('🖼️ [AppController] Getting adjusted image blob...');
             const adjustedBlob = await FormView.getAdjustedImageBlob();
+            console.log('🖼️ [AppController] Image blob received:', adjustedBlob?.size, 'bytes');
             
             if (!adjustedBlob) {
+                console.error('❌ [AppController] Failed to get image blob');
                 alert('Please select an image');
                 FormView.setSubmitting(false);
                 return;
             }
             
             // Create new FormData with adjusted image
+            console.log('📦 [AppController] Creating FormData...');
             const formData = new FormData();
             formData.append('title', title);
             formData.append('body', body);
             formData.append('tag', tag);
             formData.append('image', adjustedBlob, 'article-image.jpg');
+            console.log('✅ [AppController] FormData created, submitting...');
             
             await ArticleModel.submitArticle(formData);
+            console.log('✅ [AppController] Article submitted successfully!');
             alert('Article submitted successfully! Your article is now live.');
             FormView.closeArticleFormModal();
             
             // Reload articles to include the new one
+            console.log('🔄 [AppController] Reloading articles...');
             const articles = await ArticleModel.fetchArticles();
             if (articles !== null) {
+                console.log('✅ [AppController] Re-rendering with', articles.length, 'articles');
                 // Reset cursor and re-render
                 this.renderContentBasedOnView(articles);
             }
+            console.log('=== ✅ [AppController] Article submission complete ===');
         } catch (error) {
+            console.error('❌ [AppController] Article submission error:', error);
+            console.error('❌ [AppController] Error stack:', error.stack);
             alert(error.message || 'Failed to submit article. Please try again.');
-            console.error('Article submission error:', error);
             FormView.setSubmitting(false);
         }
     }
