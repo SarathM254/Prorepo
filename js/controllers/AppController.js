@@ -109,14 +109,30 @@ const AppController = {
      */
     renderContentBasedOnView(articles) {
         const isMobile = this.isMobileView();
-        console.log(`renderContentBasedOnView: isMobile = ${isMobile}`);
+        console.log(`🎯 [AppController] renderContentBasedOnView: isMobile = ${isMobile}, articles = ${articles.length}`);
         
-        // Reset cursor and loop state for fresh rendering (start from 0 now, no featured article)
+        // IMPORTANT: Disconnect any existing scroll observers FIRST
+        if (this.scrollObserver) {
+            console.log('🛑 [AppController] Disconnecting existing scroll observer before re-render');
+            this.scrollObserver.disconnect();
+            this.scrollObserver = null;
+        }
+        
+        // Reset cursor and loop state for fresh rendering
         ArticleModel.cursor = 0;
         ArticleModel.resetLoop();
         
+        // Clear the grid completely before rendering
+        console.log('🧹 [AppController] Clearing news grid before render');
+        ArticleView.elements.newsGrid.innerHTML = '';
+        
+        // Render based on view type
         ArticleView.renderInitialLayout(articles, isMobile);
+        
+        // Set up infinite scroll only for mobile
         this.toggleInfiniteScroll(isMobile);
+        
+        console.log(`✅ [AppController] Render complete. Desktop should show max ${ArticleModel.desktopArticlesLimit} articles`);
     },
 
     /**
@@ -270,11 +286,17 @@ const AppController = {
     },
 
     /**
-     * Handles infinite scroll logic
+     * Handles infinite scroll logic (MOBILE ONLY)
      * @param {Array} entries - IntersectionObserver entries
      */
     handleInfiniteScroll(entries) {
-        console.log("handleInfiniteScroll: IntersectionObserver fired.", 
+        // SAFETY CHECK: Immediately exit if on desktop
+        if (!this.isMobileView()) {
+            console.log("🛑 handleInfiniteScroll: BLOCKED - Desktop view detected, infinite scroll disabled");
+            return;
+        }
+        
+        console.log("📜 handleInfiniteScroll: Mobile scroll triggered", 
                     "isIntersecting:", entries[0].isIntersecting, 
                     "cursor:", ArticleModel.cursor,
                     "total articles:", ArticleModel.articles.length);

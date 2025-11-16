@@ -87,21 +87,33 @@ const ArticleView = {
                 this.elements.scrollSentinel.style.display = 'block';
             }
         } else {
-            // Show all articles in grid (no featured article)
-            const desktopArticles = ArticleModel.articles.slice(0, ArticleModel.desktopArticlesLimit);
-            console.log('💻 [ArticleView] Desktop: Rendering', desktopArticles.length, 'articles (FIXED, NO REPEATS)');
+            // Desktop: Show ONLY fixed number of articles (NO INFINITE SCROLL, NO REPEATS)
+            const maxArticles = Math.min(ArticleModel.desktopArticlesLimit, ArticleModel.articles.length);
+            const desktopArticles = ArticleModel.articles.slice(0, maxArticles);
+            console.log(`💻 [ArticleView] Desktop: Rendering EXACTLY ${desktopArticles.length} articles (max ${ArticleModel.desktopArticlesLimit})`);
+            
+            // FORCE CLEAR - ensure no duplicates
             this.elements.newsGrid.innerHTML = '';
-            desktopArticles.forEach(article => {
+            
+            // Render each article
+            const fragment = document.createDocumentFragment();
+            desktopArticles.forEach((article, index) => {
                 const articleEl = document.createElement('div');
                 articleEl.className = 'news-card';
                 articleEl.innerHTML = this.createArticleHTML(article, false);
-                this.elements.newsGrid.appendChild(articleEl);
+                fragment.appendChild(articleEl);
+                console.log(`  └─ Article ${index + 1}: ${article.title?.substring(0, 30)}...`);
             });
+            this.elements.newsGrid.appendChild(fragment);
             this.elements.newsGrid.style.display = 'grid';
-            // Hide sentinel on desktop - no infinite scroll
+            
+            // FORCE HIDE sentinel on desktop - absolutely no infinite scroll
             if (this.elements.scrollSentinel) {
                 this.elements.scrollSentinel.style.display = 'none';
+                this.elements.scrollSentinel.style.visibility = 'hidden';
             }
+            
+            console.log('✅ [ArticleView] Desktop render complete - NO MORE ARTICLES WILL BE ADDED');
         }
         console.log('✅ [ArticleView] Initial layout rendered');
     },
