@@ -11,7 +11,7 @@ let articles = [
         title: 'Welcome to Proto!',
         body: 'This is a demo article. Start by adding your own articles using the + button below! Proto makes it easy to share campus news, events, and updates with your community.',
         tag: 'Campus',
-        image_path: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop',
+        image_path: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&h=600&fit=crop',
         author_name: 'Admin User',
         created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() // 30 min ago
     },
