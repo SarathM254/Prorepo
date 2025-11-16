@@ -119,12 +119,20 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
         console.log('📥 [API] GET request - fetching articles');
         console.log('📊 [API] Total articles available:', articles.length);
-        const sortedArticles = articles.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        console.log('🖼️ [API] First article:', sortedArticles[0]);
-        console.log('✅ [API] Sending', sortedArticles.length, 'articles');
+        
+        // Shuffle articles using Fisher-Yates algorithm for randomization
+        const shuffledArticles = [...articles];
+        for (let i = shuffledArticles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledArticles[i], shuffledArticles[j]] = [shuffledArticles[j], shuffledArticles[i]];
+        }
+        
+        console.log('🔀 [API] Articles shuffled for random display');
+        console.log('🖼️ [API] First article:', shuffledArticles[0]);
+        console.log('✅ [API] Sending', shuffledArticles.length, 'articles');
         return res.status(200).json({
             success: true,
-            articles: sortedArticles
+            articles: shuffledArticles
         });
     }
 

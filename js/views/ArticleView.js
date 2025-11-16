@@ -82,10 +82,14 @@ const ArticleView = {
             this.elements.newsGrid.innerHTML = '';
             this.renderArticleGrid(initialBatch);
             this.elements.newsGrid.style.display = 'grid';
+            // Show sentinel for infinite scroll
+            if (this.elements.scrollSentinel) {
+                this.elements.scrollSentinel.style.display = 'block';
+            }
         } else {
             // Show all articles in grid (no featured article)
             const desktopArticles = ArticleModel.articles.slice(0, ArticleModel.desktopArticlesLimit);
-            console.log('💻 [ArticleView] Desktop: Rendering', desktopArticles.length, 'articles');
+            console.log('💻 [ArticleView] Desktop: Rendering', desktopArticles.length, 'articles (FIXED, NO REPEATS)');
             this.elements.newsGrid.innerHTML = '';
             desktopArticles.forEach(article => {
                 const articleEl = document.createElement('div');
@@ -94,6 +98,10 @@ const ArticleView = {
                 this.elements.newsGrid.appendChild(articleEl);
             });
             this.elements.newsGrid.style.display = 'grid';
+            // Hide sentinel on desktop - no infinite scroll
+            if (this.elements.scrollSentinel) {
+                this.elements.scrollSentinel.style.display = 'none';
+            }
         }
         console.log('✅ [ArticleView] Initial layout rendered');
     },

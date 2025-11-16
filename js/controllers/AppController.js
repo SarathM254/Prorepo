@@ -168,6 +168,15 @@ const AppController = {
     setupEventListeners() {
         console.log("AppController.setupEventListeners() called.");
         
+        // Home button - refresh page to get randomized articles
+        const homeBtn = document.getElementById('homeBtn');
+        if (homeBtn) {
+            homeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                location.reload();
+            });
+        }
+        
         // Profile functionality
         const profileBtn = document.querySelector('.bottom-nav .nav-item:last-child');
         if (profileBtn) {
