@@ -65,23 +65,24 @@
     font-weight: 600 !important;
 }
 
-/* Super Admin Icon - Replaces user icon */
+/* Super Admin Bull Logo - Replaces user icon */
 .profile-icon-wrapper {
     position: relative;
     display: inline-block;
 }
 
-.super-admin-icon {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 1.15rem;
+.super-admin-logo {
+    width: 1.15rem;
+    height: 1.15rem;
+    object-fit: contain;
+    object-position: center;
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
     position: relative;
+    display: block;
+    margin: 0 auto;
 }
 
-.super-admin-icon::before {
+.super-admin-logo::before {
     content: '';
     position: absolute;
     top: 50%;
@@ -106,12 +107,12 @@
     }
 }
 
-/* Hide regular icon when super admin icon is shown */
+/* Hide regular icon when super admin logo is shown */
 .profile-icon-wrapper.has-super-admin #regularUserIcon {
     display: none;
 }
 
-.profile-icon-wrapper.has-super-admin #superAdminIcon {
+.profile-icon-wrapper.has-super-admin #superAdminLogo {
     display: block !important;
 }
 

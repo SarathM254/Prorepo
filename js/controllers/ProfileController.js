@@ -107,12 +107,14 @@ const ProfileController = {
                 }
             }
 
-            if (userData) {
-                this.currentUser = userData;
-                this.renderProfile(userData);
-            } else {
-                throw new Error('Failed to load user profile');
-            }
+        if (userData) {
+            this.currentUser = userData;
+            this.renderProfile(userData);
+            // Update navigation icon on profile page
+            this.updateNavigationIcon(userData);
+        } else {
+            throw new Error('Failed to load user profile');
+        }
         } catch (error) {
             console.error('Error loading profile:', error);
             this.showError('Failed to load profile. Please try again.');
@@ -173,8 +175,8 @@ const ProfileController = {
         if (!avatarContainer) return;
         
         if (user.isSuperAdmin === true) {
-            // Super admin: Shield icon with gold gradient
-            avatarContainer.innerHTML = '<i class="fas fa-shield-halved"></i>';
+            // Super admin: Bull logo
+            avatarContainer.innerHTML = '<img src="Bull.png" alt="Super Admin" class="avatar-bull-logo">';
             avatarContainer.classList.add('super-admin');
             
             if (avatarBadge) {
@@ -360,6 +362,30 @@ const ProfileController = {
                 messageDiv.style.display = 'none';
             }
         }, 5000);
+    },
+
+    /**
+     * Updates the navigation icon on the profile page
+     * @param {Object} user - User profile data
+     */
+    updateNavigationIcon(user) {
+        const regularIcon = document.getElementById('regularUserIcon');
+        const superAdminLogo = document.getElementById('superAdminLogo');
+        const iconWrapper = document.querySelector('.profile-icon-wrapper');
+        
+        if (user && user.isSuperAdmin === true) {
+            if (regularIcon) regularIcon.style.display = 'none';
+            if (superAdminLogo) {
+                superAdminLogo.style.display = 'block';
+                if (iconWrapper) iconWrapper.classList.add('has-super-admin');
+            }
+        } else {
+            if (regularIcon) regularIcon.style.display = 'block';
+            if (superAdminLogo) {
+                superAdminLogo.style.display = 'none';
+                if (iconWrapper) iconWrapper.classList.remove('has-super-admin');
+            }
+        }
     }
 };
 

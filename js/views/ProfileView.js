@@ -120,7 +120,7 @@ const ProfileView = {
     updateProfileButton(user) {
         const profileBtnSpan = document.querySelector('.bottom-nav .nav-item:last-child span');
         const regularIcon = document.getElementById('regularUserIcon');
-        const superAdminIcon = document.getElementById('superAdminIcon');
+        const superAdminLogo = document.getElementById('superAdminLogo');
         const iconWrapper = document.querySelector('.profile-icon-wrapper');
         
         if (profileBtnSpan && user && user.name) {
@@ -132,14 +132,14 @@ const ProfileView = {
         // Replace icon for super admin (instead of overlaying)
         if (user && user.isSuperAdmin === true) {
             if (regularIcon) regularIcon.style.display = 'none';
-            if (superAdminIcon) {
-                superAdminIcon.style.display = 'block';
+            if (superAdminLogo) {
+                superAdminLogo.style.display = 'block';
                 if (iconWrapper) iconWrapper.classList.add('has-super-admin');
             }
         } else {
             if (regularIcon) regularIcon.style.display = 'block';
-            if (superAdminIcon) {
-                superAdminIcon.style.display = 'none';
+            if (superAdminLogo) {
+                superAdminLogo.style.display = 'none';
                 if (iconWrapper) iconWrapper.classList.remove('has-super-admin');
             }
         }
