@@ -78,18 +78,32 @@ export default async function handler(req, res) {
       const { db } = await connectToDatabase();
       const usersCollection = db.collection('users');
       
+      const normalizedEmail = decodeURIComponent(email).toLowerCase().trim();
       const user = await usersCollection.findOne({ 
-        email: decodeURIComponent(email).toLowerCase() 
+        email: normalizedEmail
       });
       
       if (user) {
+        // Check if this is super admin email and update if needed
+        const isSuperAdminEmail = normalizedEmail === 'motupallisarathchandra@gmail.com';
+        let isSuperAdmin = user.isSuperAdmin || false;
+        
+        // If email matches super admin but DB doesn't have the flag, update it
+        if (isSuperAdminEmail && !user.isSuperAdmin) {
+          await usersCollection.updateOne(
+            { _id: user._id },
+            { $set: { isSuperAdmin: true } }
+          );
+          isSuperAdmin = true;
+        }
+        
         return res.status(200).json({
           authenticated: true,
           user: {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
-            isSuperAdmin: user.isSuperAdmin || false
+            isSuperAdmin: isSuperAdmin
           }
         });
       }

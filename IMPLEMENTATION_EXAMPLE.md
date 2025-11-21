@@ -363,7 +363,7 @@ Add these to Vercel Dashboard → Project Settings → Environment Variables:
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/proto?retryWrites=true&w=majority
+MONGODB_URI=your_mongodb_connection_string
 ```
 
 ---

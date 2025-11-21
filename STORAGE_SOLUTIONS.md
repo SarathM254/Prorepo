@@ -213,7 +213,7 @@ await articlesCollection.insertOne({
 2. Create free cluster (M0)
 3. Create database user
 4. Whitelist IP (0.0.0.0/0 for Vercel)
-5. Get connection string: `mongodb+srv://username:password@cluster.mongodb.net/proto?retryWrites=true&w=majority`
+5. Get connection string from MongoDB Atlas dashboard (format: `mongodb+srv://...`)
 
 ### Step 3: Add Environment Variables to Vercel
 
