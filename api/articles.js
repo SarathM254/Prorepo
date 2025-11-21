@@ -1,189 +1,226 @@
 /**
  * Vercel Serverless Function - Articles
- * Handle article CRUD operations
- * TODO: Connect to MongoDB Atlas or Vercel KV for persistence
+ * Uses Cloudinary for images and MongoDB Atlas for database
  */
 
-// Demo articles (in production, fetch from database)
-let articles = [
-    {
-        id: 1,
-        title: 'Welcome to Proto!',
-        body: 'This is a demo article. Start by adding your own articles using the + button below! Proto makes it easy to share campus news, events, and updates with your community.',
-        tag: 'Campus',
-        image_path: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&h=600&fit=crop',
-        author_name: 'Admin User',
-        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() // 30 min ago
-    },
-    {
-        id: 2,
-        title: 'Getting Started with Proto',
-        body: 'Proto is your campus news platform. Share news, events, sports updates and opinions with your community. Connect with students and stay informed!',
-        tag: 'Events',
-        image_path: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&h=600&fit=crop',
-        author_name: 'Sarah Johnson',
-        created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString() // 1 hour ago
-    },
-    {
-        id: 3,
-        title: 'Campus Football Team Wins Championship',
-        body: 'Our football team secured a thrilling victory in the finals! The team showed exceptional performance throughout the season.',
-        tag: 'Sports',
-        image_path: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&h=600&fit=crop',
-        author_name: 'Mike Chen',
-        created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString() // 1.5 hours ago
-    },
-    {
-        id: 4,
-        title: 'Annual Tech Fest Announced',
-        body: 'Mark your calendars! The annual tech fest is happening next month. Expect workshops, competitions, and guest speakers from leading tech companies.',
-        tag: 'Events',
-        image_path: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop',
-        author_name: 'Emily Davis',
-        created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString() // 2 hours ago
-    },
-    {
-        id: 5,
-        title: 'New Library Hours Extended',
-        body: 'Great news! The campus library will now be open 24/7 during exam weeks. This includes access to study rooms and computer labs.',
-        tag: 'Campus',
-        image_path: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop',
-        author_name: 'Admin User',
-        created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString() // 3 hours ago
-    },
-    {
-        id: 6,
-        title: 'Student Art Exhibition Opens',
-        body: 'The student art gallery is now showcasing incredible works from our talented art majors. Free admission for all students!',
-        tag: 'Culture',
-        image_path: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=600&fit=crop',
-        author_name: 'Lisa Anderson',
-        created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString() // 4 hours ago
-    },
-    {
-        id: 7,
-        title: 'Campus Sustainability Initiative Launched',
-        body: 'Join us in making our campus greener! New recycling programs and solar panels are being installed across campus buildings.',
-        tag: 'Campus',
-        image_path: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&h=600&fit=crop',
-        author_name: 'Green Team',
-        created_at: new Date(Date.now() - 1000 * 60 * 300).toISOString() // 5 hours ago
-    },
-    {
-        id: 8,
-        title: 'Guest Lecture: AI and the Future',
-        body: 'Renowned AI researcher Dr. James Wilson will be speaking about artificial intelligence and its impact on society. Open to all students!',
-        tag: 'Academic',
-        image_path: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=600&fit=crop',
-        author_name: 'CS Department',
-        created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString() // 6 hours ago
-    },
-    {
-        id: 9,
-        title: 'Basketball Tournament Results',
-        body: 'Congratulations to all teams who participated in the inter-college basketball tournament. Finals this weekend!',
-        tag: 'Sports',
-        image_path: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&h=600&fit=crop',
-        author_name: 'Sports Committee',
-        created_at: new Date(Date.now() - 1000 * 60 * 420).toISOString() // 7 hours ago
-    },
-    {
-        id: 10,
-        title: 'Career Fair Next Week',
-        body: 'Top companies are coming to campus! Update your resumes and prepare for interviews. Great internship and job opportunities await.',
-        tag: 'Career',
-        image_path: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&h=600&fit=crop',
-        author_name: 'Career Services',
-        created_at: new Date(Date.now() - 1000 * 60 * 480).toISOString() // 8 hours ago
-    }
-];
+import { v2 as cloudinary } from 'cloudinary';
+import { MongoClient } from 'mongodb';
+
+// Configure Cloudinary
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+  console.log('✅ [API] Cloudinary configured');
+} else {
+  console.error('❌ [API] Cloudinary environment variables missing!');
+}
+
+// MongoDB connection (cached for serverless)
+let cachedClient = null;
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI environment variable is not set');
+  }
+
+  console.log('🔌 [API] Connecting to MongoDB...');
+  const client = new MongoClient(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+
+  try {
+    await client.connect();
+    console.log('✅ [API] MongoDB connected successfully');
+    const db = client.db('campuzway_main');
+    console.log('📊 [API] Using database: campuzway_main');
+
+    cachedClient = client;
+    cachedDb = db;
+
+    return { client, db };
+  } catch (error) {
+    console.error('❌ [API] MongoDB connection error:', error);
+    throw error;
+  }
+}
 
 export default async function handler(req, res) {
-    console.log('=== 📡 [API] Articles endpoint called ===');
-    console.log('🔧 [API] Method:', req.method);
-    console.log('🌐 [API] URL:', req.url);
-    
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  console.log('=== 📡 [API] Articles endpoint called ===');
+  console.log('🔧 [API] Method:', req.method);
+  
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-    if (req.method === 'OPTIONS') {
-        console.log('✅ [API] OPTIONS request handled');
-        res.status(200).end();
-        return;
-    }
+  if (req.method === 'OPTIONS') {
+    console.log('✅ [API] OPTIONS request handled');
+    res.status(200).end();
+    return;
+  }
+
+  try {
+    const { db } = await connectToDatabase();
+    const articlesCollection = db.collection('articles');
 
     // GET - Fetch all articles
     if (req.method === 'GET') {
-        console.log('📥 [API] GET request - fetching articles');
-        console.log('📊 [API] Total articles available:', articles.length);
-        
-        // Shuffle articles using Fisher-Yates algorithm for randomization
-        const shuffledArticles = [...articles];
-        for (let i = shuffledArticles.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledArticles[i], shuffledArticles[j]] = [shuffledArticles[j], shuffledArticles[i]];
-        }
-        
-        console.log('🔀 [API] Articles shuffled for random display');
-        console.log('🖼️ [API] First article:', shuffledArticles[0]);
-        console.log('✅ [API] Sending', shuffledArticles.length, 'articles');
-        return res.status(200).json({
-            success: true,
-            articles: shuffledArticles
-        });
+      console.log('📥 [API] GET request - fetching articles from MongoDB');
+      
+      const articles = await articlesCollection
+        .find({ status: 'approved' })
+        .sort({ created_at: -1 })
+        .toArray();
+      
+      // Convert MongoDB _id to id for frontend compatibility
+      const formattedArticles = articles.map(article => ({
+        id: article._id.toString(),
+        title: article.title,
+        body: article.body,
+        tag: article.tag,
+        image_path: article.image_path,
+        author_name: article.author_name,
+        created_at: article.created_at
+      }));
+      
+      console.log('📊 [API] Found', formattedArticles.length, 'articles');
+      
+      return res.status(200).json({
+        success: true,
+        articles: formattedArticles
+      });
     }
 
     // POST - Create new article
     if (req.method === 'POST') {
-        console.log('📤 [API] POST request - creating article');
-        console.log('📦 [API] Request body keys:', Object.keys(req.body || {}));
-        
+      console.log('📤 [API] POST request - creating article');
+      console.log('📦 [API] Request body keys:', Object.keys(req.body || {}));
+      
+      const { title, body, tag, imageData, author_name } = req.body;
+      
+      if (!title || !body || !tag) {
+        console.error('❌ [API] Missing required fields');
+        return res.status(400).json({
+          success: false,
+          error: 'Title, body, and tag are required'
+        });
+      }
+
+      let imageUrl = null;
+
+      // Upload image to Cloudinary if provided
+      if (imageData) {
         try {
-            const { title, body, tag, imageData } = req.body;
-            console.log('📝 [API] Received data - title:', title, 'tag:', tag, 'hasImage:', !!imageData);
-
-            if (!title || !body || !tag) {
-                console.error('❌ [API] Missing required fields');
-                return res.status(400).json({
-                    success: false,
-                    error: 'Title, body, and tag are required'
-                });
-            }
-
-            // In production, you would upload imageData to cloud storage (S3, Cloudinary, etc.)
-            // For demo, we use the base64 data directly or a placeholder
-            const newArticle = {
-                id: articles.length + 1,
-                title,
-                body,
-                tag,
-                image_path: imageData || 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&h=600&fit=crop',
-                author_name: 'Demo User',
-                created_at: new Date().toISOString()
-            };
-
-            articles.push(newArticle);
-            console.log('✅ [API] Article created successfully:', newArticle.id);
-            console.log('📊 [API] Total articles now:', articles.length);
-
-            return res.status(201).json({
-                success: true,
-                article: newArticle,
-                message: 'Article created successfully'
-            });
+          console.log('☁️ [API] Uploading image to Cloudinary...');
+          console.log('📏 [API] Image data length:', imageData.length);
+          console.log('📏 [API] Image data preview:', imageData.substring(0, 50) + '...');
+          
+          // Check if Cloudinary is configured
+          if (!process.env.CLOUDINARY_CLOUD_NAME) {
+            throw new Error('Cloudinary not configured - check environment variables');
+          }
+          
+          // Upload base64 image to Cloudinary (Cloudinary accepts data URLs directly)
+          const uploadResult = await cloudinary.uploader.upload(imageData, {
+            folder: 'proto-articles',
+            resource_type: 'image',
+            transformation: [
+              {
+                width: 1500,
+                height: 1100,
+                crop: 'fill',
+                quality: 'auto',
+                format: 'auto'
+              }
+            ]
+          });
+          
+          imageUrl = uploadResult.secure_url;
+          console.log('✅ [API] Image uploaded successfully!');
+          console.log('🔗 [API] Image URL:', imageUrl);
+          console.log('📦 [API] Image public_id:', uploadResult.public_id);
         } catch (error) {
-            console.error('❌ [API] Error creating article:', error);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to create article'
-            });
+          console.error('❌ [API] Cloudinary upload error:', error);
+          console.error('❌ [API] Error details:', JSON.stringify(error, null, 2));
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to upload image: ' + (error.message || 'Unknown error')
+          });
         }
+      } else {
+        // Use default placeholder if no image
+        console.log('⚠️ [API] No image data provided, using placeholder');
+        imageUrl = 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&h=600&fit=crop';
+      }
+
+      // Create article in MongoDB
+      const newArticle = {
+        title,
+        body,
+        tag,
+        image_path: imageUrl,
+        author_name: author_name || 'Anonymous',
+        status: 'approved',
+        created_at: new Date()
+      };
+
+      console.log('💾 [API] Saving article to MongoDB...');
+      console.log('📝 [API] Article data:', {
+        title: newArticle.title,
+        tag: newArticle.tag,
+        hasImage: !!newArticle.image_path,
+        author: newArticle.author_name
+      });
+
+      const result = await articlesCollection.insertOne(newArticle);
+      
+      if (!result.insertedId) {
+        throw new Error('Failed to insert article - no ID returned');
+      }
+      
+      newArticle.id = result.insertedId.toString();
+      console.log('✅ [API] Article saved to MongoDB successfully!');
+      console.log('🆔 [API] Article ID:', newArticle.id);
+      console.log('📊 [API] Insert result:', {
+        acknowledged: result.acknowledged,
+        insertedId: result.insertedId.toString()
+      });
+
+      return res.status(201).json({
+        success: true,
+        article: {
+          id: newArticle.id,
+          title: newArticle.title,
+          body: newArticle.body,
+          tag: newArticle.tag,
+          image_path: newArticle.image_path,
+          author_name: newArticle.author_name,
+          created_at: newArticle.created_at
+        },
+        message: 'Article created successfully'
+      });
     }
 
     console.error('❌ [API] Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    console.error('❌ [API] Fatal Error:', error);
+    console.error('❌ [API] Error stack:', error.stack);
+    console.error('❌ [API] Error name:', error.name);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error: ' + error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 }
-
