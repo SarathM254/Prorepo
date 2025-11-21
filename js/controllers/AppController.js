@@ -365,27 +365,49 @@ const AppController = {
      */
     async handleProfileClick(e) {
         e.preventDefault();
-        ProfileView.renderProfileModal({ 
-            name: 'Loading...', 
-            email: 'Loading...', 
-            createdAt: new Date().toISOString() 
-        });
-        try {
-            const user = await ArticleModel.fetchProfile();
-            if (user) {
-                ProfileView.renderProfileModal(user);
-                this.setupProfileModalListeners();
-            } else {
-                // In demo mode, show default profile
-                ProfileView.renderProfileModal({
-                    name: 'Demo User',
-                    email: 'demo@proto.com'
+        
+        // Get user data from auth status (which has isSuperAdmin)
+        const authToken = localStorage.getItem('authToken');
+        let userData = null;
+        
+        if (authToken) {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
                 });
-                this.setupProfileModalListeners();
+                const data = await response.json();
+                if (data.authenticated && data.user) {
+                    userData = data.user;
+                }
+            } catch (error) {
+                console.error('Auth status check failed:', error);
             }
-        } catch (error) {
-            ProfileView.showProfileError('Failed to load profile.');
-            console.error('Profile load error:', error);
+        }
+        
+        // If we have user data, use it; otherwise fetch from profile API
+        if (!userData) {
+            try {
+                const profileData = await ArticleModel.fetchProfile();
+                if (profileData) {
+                    userData = profileData;
+                }
+            } catch (error) {
+                console.error('Profile fetch failed:', error);
+            }
+        }
+        
+        if (userData) {
+            ProfileView.renderProfileModal(userData);
+            this.setupProfileModalListeners();
+        } else {
+            ProfileView.renderProfileModal({
+                name: 'Demo User',
+                email: 'demo@proto.com',
+                isSuperAdmin: false
+            });
+            this.setupProfileModalListeners();
         }
     },
 

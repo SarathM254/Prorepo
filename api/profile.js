@@ -82,7 +82,8 @@ export default async function handler(req, res) {
 
     // GET - Fetch user profile
     if (req.method === 'GET') {
-      const user = await usersCollection.findOne({ email: userEmail.toLowerCase() });
+      const normalizedEmail = userEmail.toLowerCase().trim();
+      const user = await usersCollection.findOne({ email: normalizedEmail });
       
       if (!user) {
         return res.status(404).json({
@@ -91,13 +92,27 @@ export default async function handler(req, res) {
         });
       }
 
+      // Check if this is super admin email and update if needed
+      const isSuperAdminEmail = normalizedEmail === 'motupallisarathchandra@gmail.com';
+      let isSuperAdmin = user.isSuperAdmin || false;
+      
+      // If email matches super admin but DB doesn't have the flag, update it
+      if (isSuperAdminEmail && !user.isSuperAdmin) {
+        await usersCollection.updateOne(
+          { _id: user._id },
+          { $set: { isSuperAdmin: true } }
+        );
+        isSuperAdmin = true;
+      }
+
       return res.status(200).json({
         success: true,
         user: {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
-          createdAt: user.created_at
+          createdAt: user.created_at,
+          isSuperAdmin: isSuperAdmin
         }
       });
     }
@@ -150,12 +165,17 @@ export default async function handler(req, res) {
       // Fetch updated user
       const updatedUser = await usersCollection.findOne({ email: email.toLowerCase() });
 
+      // Check if this is super admin email
+      const isSuperAdminEmail = updatedUser.email.toLowerCase().trim() === 'motupallisarathchandra@gmail.com';
+      const isSuperAdmin = updatedUser.isSuperAdmin || isSuperAdminEmail;
+
       return res.status(200).json({
         success: true,
         user: {
           id: updatedUser._id.toString(),
           name: updatedUser.name,
-          email: updatedUser.email
+          email: updatedUser.email,
+          isSuperAdmin: isSuperAdmin
         },
         message: 'Profile updated successfully'
       });

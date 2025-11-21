@@ -127,11 +127,13 @@ const ProfileView = {
             profileBtnSpan.textContent = 'Profile';
         }
         
-        // Show crown for super admin
-        if (user && user.isSuperAdmin && crownIcon) {
-            crownIcon.style.display = 'block';
-        } else if (crownIcon) {
-            crownIcon.style.display = 'none';
+        // Show crown ONLY for super admin (strict check)
+        if (crownIcon) {
+            if (user && user.isSuperAdmin === true) {
+                crownIcon.style.display = 'block';
+            } else {
+                crownIcon.style.display = 'none';
+            }
         }
     },
 
