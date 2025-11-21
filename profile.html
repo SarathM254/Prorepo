@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Proto</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/navigation.css">
+</head>
+<body>
+    <!-- Header with back button -->
+    <header class="profile-header">
+        <button class="back-btn" id="backBtn">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1>Profile</h1>
+        <div class="header-spacer"></div>
+    </header>
+
+    <!-- Main Profile Content -->
+    <main class="profile-page-content">
+        <!-- Profile Avatar Section -->
+        <section class="profile-avatar-section">
+            <div class="avatar-container">
+                <div class="profile-avatar" id="profileAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="avatar-badge" id="avatarBadge" style="display: none;">
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+            <h2 class="profile-name" id="profileName">Loading...</h2>
+            <p class="profile-email" id="profileEmail">Loading...</p>
+        </section>
+
+        <!-- Profile Information Section -->
+        <section class="profile-info-section">
+            <!-- Display Mode -->
+            <div class="profile-display active" id="profileDisplay">
+                <div class="info-card">
+                    <div class="info-item">
+                        <label>Name</label>
+                        <div class="info-value" id="displayName">-</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Email</label>
+                        <div class="info-value" id="displayEmail">-</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Member Since</label>
+                        <div class="info-value" id="displayMemberSince">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div class="profile-edit" id="profileEdit" style="display: none;">
+                <div class="info-card">
+                    <div class="info-item">
+                        <label>Name</label>
+                        <input type="text" id="editName" class="edit-input">
+                    </div>
+                    <div class="info-item">
+                        <label>Email</label>
+                        <input type="email" id="editEmail" class="edit-input">
+                    </div>
+                    <div class="edit-actions">
+                        <button class="save-btn" id="saveProfileBtn">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button class="cancel-btn" id="cancelEditBtn">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Action Buttons Section -->
+        <section class="profile-actions-section" id="profileActions">
+            <button class="action-btn edit-btn" id="editProfileBtn">
+                <i class="fas fa-edit"></i> Edit Profile
+            </button>
+            <!-- Super Admin Actions -->
+            <div class="admin-actions" id="adminActions" style="display: none;">
+                <button class="action-btn admin-btn" id="adminPanelBtn">
+                    <i class="fas fa-shield-alt"></i> Admin Panel
+                </button>
+            </div>
+            <button class="action-btn logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation (same as index.html) -->
+    <nav class="bottom-nav">
+        <a href="/index.html" class="nav-item" id="homeBtn">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="/index.html" class="nav-item add-article-btn" id="addArticleBtn">
+            <i class="fas fa-plus"></i>
+            <span>Add</span>
+        </a>
+        <a href="/profile.html" class="nav-item active" id="profileNavItem">
+            <div class="profile-icon-wrapper">
+                <i class="fas fa-user" id="regularUserIcon"></i>
+                <i class="fas fa-shield-halved super-admin-icon" id="superAdminIcon" style="display: none;"></i>
+            </div>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <!-- JavaScript -->
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/models/ArticleModel.js"></script>
+    <script src="js/controllers/ProfileController.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
+

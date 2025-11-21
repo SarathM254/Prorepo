@@ -365,50 +365,8 @@ const AppController = {
      */
     async handleProfileClick(e) {
         e.preventDefault();
-        
-        // Get user data from auth status (which has isSuperAdmin)
-        const authToken = localStorage.getItem('authToken');
-        let userData = null;
-        
-        if (authToken) {
-            try {
-                const response = await fetch('/api/auth/status', {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
-                const data = await response.json();
-                if (data.authenticated && data.user) {
-                    userData = data.user;
-                }
-            } catch (error) {
-                console.error('Auth status check failed:', error);
-            }
-        }
-        
-        // If we have user data, use it; otherwise fetch from profile API
-        if (!userData) {
-            try {
-                const profileData = await ArticleModel.fetchProfile();
-                if (profileData) {
-                    userData = profileData;
-                }
-            } catch (error) {
-                console.error('Profile fetch failed:', error);
-            }
-        }
-        
-        if (userData) {
-            ProfileView.renderProfileModal(userData);
-            this.setupProfileModalListeners();
-        } else {
-            ProfileView.renderProfileModal({
-                name: 'Demo User',
-                email: 'demo@proto.com',
-                isSuperAdmin: false
-            });
-            this.setupProfileModalListeners();
-        }
+        // Navigate to profile page instead of opening modal
+        window.location.href = '/profile.html';
     },
 
     /**

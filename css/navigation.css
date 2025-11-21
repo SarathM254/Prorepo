@@ -65,35 +65,53 @@
     font-weight: 600 !important;
 }
 
-/* Super Admin Crown Icon - Blended with user icon */
+/* Super Admin Icon - Replaces user icon */
 .profile-icon-wrapper {
     position: relative;
     display: inline-block;
 }
 
-.super-admin-crown {
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 0.45rem;
-    z-index: 5;
-    opacity: 0.95;
-    pointer-events: none;
-    display: none;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
-}
-
-/* When super admin, show crown blended on top of user icon */
-.profile-icon-wrapper .fa-user {
+.super-admin-icon {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.15rem;
+    filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
     position: relative;
 }
 
-/* Ensure crown is white and blends with the icon */
-.profile-icon-wrapper .super-admin-crown[style*="display: block"] {
+.super-admin-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    z-index: -1;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+/* Hide regular icon when super admin icon is shown */
+.profile-icon-wrapper.has-super-admin #regularUserIcon {
+    display: none;
+}
+
+.profile-icon-wrapper.has-super-admin #superAdminIcon {
     display: block !important;
-    color: white !important;
 }
 

@@ -119,7 +119,9 @@ const ProfileView = {
      */
     updateProfileButton(user) {
         const profileBtnSpan = document.querySelector('.bottom-nav .nav-item:last-child span');
-        const crownIcon = document.getElementById('superAdminCrown');
+        const regularIcon = document.getElementById('regularUserIcon');
+        const superAdminIcon = document.getElementById('superAdminIcon');
+        const iconWrapper = document.querySelector('.profile-icon-wrapper');
         
         if (profileBtnSpan && user && user.name) {
             profileBtnSpan.textContent = user.name.split(' ')[0];
@@ -127,12 +129,18 @@ const ProfileView = {
             profileBtnSpan.textContent = 'Profile';
         }
         
-        // Show crown ONLY for super admin (strict check)
-        if (crownIcon) {
-            if (user && user.isSuperAdmin === true) {
-                crownIcon.style.display = 'block';
-            } else {
-                crownIcon.style.display = 'none';
+        // Replace icon for super admin (instead of overlaying)
+        if (user && user.isSuperAdmin === true) {
+            if (regularIcon) regularIcon.style.display = 'none';
+            if (superAdminIcon) {
+                superAdminIcon.style.display = 'block';
+                if (iconWrapper) iconWrapper.classList.add('has-super-admin');
+            }
+        } else {
+            if (regularIcon) regularIcon.style.display = 'block';
+            if (superAdminIcon) {
+                superAdminIcon.style.display = 'none';
+                if (iconWrapper) iconWrapper.classList.remove('has-super-admin');
             }
         }
     },
