@@ -5,7 +5,7 @@
 
 const AdminController = {
     /**
-     * Initialize admin panel
+     * Initialize admin panel (for admin.html page)
      */
     async init() {
         // Check if user is super admin
@@ -23,6 +23,29 @@ const AdminController = {
 
         // Setup event listeners
         this.setupEventListeners();
+    },
+
+    /**
+     * Initialize admin panel in modal (for embedded admin panel)
+     */
+    async initInModal() {
+        // Check if user is super admin
+        const isSuperAdmin = await this.checkSuperAdminAccess();
+        if (!isSuperAdmin) {
+            this.showError('Access denied. Super admin access required.');
+            setTimeout(() => {
+                if (typeof AdminPanelView !== 'undefined') {
+                    AdminPanelView.closeAdminPanel();
+                }
+            }, 2000);
+            return;
+        }
+
+        // Load users
+        await this.loadAllUsersInModal();
+
+        // Setup event listeners for modal
+        this.setupEventListenersInModal();
     },
 
     /**
@@ -281,6 +304,277 @@ const AdminController = {
                 this.deleteAllUsers();
             });
         }
+    },
+
+    /**
+     * Load all users from API (for modal mode)
+     */
+    async loadAllUsersInModal() {
+        const usersListDiv = document.getElementById('adminUsersList');
+        const authToken = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch('/api/admin/users', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 403 || response.status === 401) {
+                    throw new Error('Super admin access required');
+                }
+                throw new Error('Failed to load users');
+            }
+
+            const data = await response.json();
+            if (data.success && data.users) {
+                this.renderUsersListInModal(data.users);
+            } else {
+                throw new Error('Invalid response from server');
+            }
+        } catch (error) {
+            console.error('Load users error:', error);
+            if (usersListDiv) {
+                usersListDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> ${error.message}
+                    </div>
+                `;
+            }
+        }
+    },
+
+    /**
+     * Render users list in modal
+     */
+    renderUsersListInModal(users) {
+        const usersListDiv = document.getElementById('adminUsersList');
+
+        if (users.length === 0) {
+            usersListDiv.innerHTML = '<p>No users found.</p>';
+            return;
+        }
+
+        let tableHTML = `
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        users.forEach(user => {
+            const createdDate = user.created_at 
+                ? new Date(user.created_at).toLocaleDateString() 
+                : 'N/A';
+            
+            const roleBadge = user.isSuperAdmin 
+                ? '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>'
+                : '<span>User</span>';
+
+            tableHTML += `
+                <tr>
+                    <td>${this.escapeHtml(user.name)}</td>
+                    <td>${this.escapeHtml(user.email)}</td>
+                    <td>${roleBadge}</td>
+                    <td>${createdDate}</td>
+                    <td>
+                        ${!user.isSuperAdmin ? `
+                            <button class="delete-btn" onclick="AdminController.deleteUserInModal('${user.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        ` : '<span style="color: #999;">-</span>'}
+                    </td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+
+        usersListDiv.innerHTML = tableHTML;
+    },
+
+    /**
+     * Delete user in modal mode
+     */
+    async deleteUserInModal(userId) {
+        if (!confirm('Are you sure you want to delete this user? This action cannot be undone. The user will need to create a new account.')) {
+            return;
+        }
+
+        const authToken = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch(`/api/admin/users?userId=${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                this.showSuccessInModal('User deleted successfully! The user must create a new account to access the system.');
+                await this.loadAllUsersInModal();
+            } else {
+                throw new Error(data.error || 'Failed to delete user');
+            }
+        } catch (error) {
+            console.error('Delete user error:', error);
+            this.showErrorInModal(error.message || 'Failed to delete user');
+        }
+    },
+
+    /**
+     * Setup event listeners for modal
+     */
+    setupEventListenersInModal() {
+        // Create user form
+        const createUserForm = document.getElementById('createUserForm');
+        if (createUserForm) {
+            createUserForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newUserName').value.trim();
+                const email = document.getElementById('newUserEmail').value.trim();
+                const password = document.getElementById('newUserPassword').value;
+
+                if (!name || !email || !password) {
+                    this.showErrorInModal('Please fill in all fields');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    this.showErrorInModal('Password must be at least 6 characters long');
+                    return;
+                }
+
+                await this.createUserInModal(name, email, password);
+            });
+        }
+
+        // Delete all users button
+        const deleteAllBtn = document.getElementById('deleteAllUsersBtn');
+        if (deleteAllBtn) {
+            deleteAllBtn.addEventListener('click', () => {
+                this.deleteAllUsersInModal();
+            });
+        }
+    },
+
+    /**
+     * Create user in modal mode
+     */
+    async createUserInModal(name, email, password) {
+        const authToken = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                this.showSuccessInModal('User created successfully!');
+                document.getElementById('createUserForm').reset();
+                await this.loadAllUsersInModal();
+            } else {
+                throw new Error(data.error || 'Failed to create user');
+            }
+        } catch (error) {
+            console.error('Create user error:', error);
+            this.showErrorInModal(error.message || 'Failed to create user');
+        }
+    },
+
+    /**
+     * Delete all users in modal mode
+     */
+    async deleteAllUsersInModal() {
+        const confirmMessage = 'Are you absolutely sure you want to delete ALL users except super admin?\n\nThis action CANNOT be undone! All deleted users will need to create new accounts.';
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        const secondConfirm = confirm('This is your last chance. Click OK to permanently delete all users except super admin.');
+        if (!secondConfirm) {
+            return;
+        }
+
+        const authToken = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch('/api/admin/users', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                this.showSuccessInModal(`Successfully deleted ${data.deletedCount || 0} users! All deleted users must create new accounts.`);
+                await this.loadAllUsersInModal();
+            } else {
+                throw new Error(data.error || 'Failed to delete users');
+            }
+        } catch (error) {
+            console.error('Delete all users error:', error);
+            this.showErrorInModal(error.message || 'Failed to delete users');
+        }
+    },
+
+    /**
+     * Show error message in modal
+     */
+    showErrorInModal(message) {
+        const errorDiv = document.getElementById('adminErrorMessage');
+        const successDiv = document.getElementById('adminSuccessMessage');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'flex';
+        }
+        if (successDiv) {
+            successDiv.style.display = 'none';
+        }
+        setTimeout(() => {
+            if (errorDiv) errorDiv.style.display = 'none';
+        }, 5000);
+    },
+
+    /**
+     * Show success message in modal
+     */
+    showSuccessInModal(message) {
+        const successDiv = document.getElementById('adminSuccessMessage');
+        const errorDiv = document.getElementById('adminErrorMessage');
+        if (successDiv) {
+            successDiv.textContent = message;
+            successDiv.style.display = 'flex';
+        }
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+        setTimeout(() => {
+            if (successDiv) successDiv.style.display = 'none';
+        }, 3000);
     },
 
     /**

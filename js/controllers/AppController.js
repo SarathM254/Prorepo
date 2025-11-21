@@ -428,7 +428,13 @@ const AppController = {
         const adminPanelBtn = modal.querySelector('#adminPanelBtn');
         if (adminPanelBtn) {
             adminPanelBtn.addEventListener('click', () => {
-                window.location.href = '/admin.html';
+                ProfileView.closeProfileModal();
+                if (typeof AdminPanelView !== 'undefined') {
+                    AdminPanelView.renderAdminPanel();
+                } else {
+                    // Fallback to redirect if AdminPanelView not loaded
+                    window.location.href = '/admin.html';
+                }
             });
         }
         
