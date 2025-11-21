@@ -6,21 +6,17 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { MongoClient, ObjectId } from 'mongodb';
 
-// Configure Cloudinary at module level
-let cloudinaryConfigured = false;
-if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-  });
-  cloudinaryConfigured = true;
-  console.log('✅ [API] Cloudinary configured at module load');
-} else {
-  console.error('❌ [API] Cloudinary environment variables missing at module load!');
-  console.error('❌ [API] CLOUDINARY_CLOUD_NAME:', !!process.env.CLOUDINARY_CLOUD_NAME);
-  console.error('❌ [API] CLOUDINARY_API_KEY:', !!process.env.CLOUDINARY_API_KEY);
-  console.error('❌ [API] CLOUDINARY_API_SECRET:', !!process.env.CLOUDINARY_API_SECRET);
+// Function to configure Cloudinary (call this in handler to ensure env vars are available)
+function configureCloudinary() {
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+    return true;
+  }
+  return false;
 }
 
 // MongoDB connection (cached for serverless)
@@ -172,10 +168,11 @@ export default async function handler(req, res) {
       if (imageData) {
         console.log('☁️ [API] Starting Cloudinary upload process...');
         
-        // Check if Cloudinary is configured
+        // Configure Cloudinary (ensure env vars are available)
+        const cloudinaryConfigured = configureCloudinary();
         if (!cloudinaryConfigured) {
           console.error('❌ [API] Cloudinary not configured!');
-          console.error('❌ [API] CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
+          console.error('❌ [API] CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME || 'MISSING');
           console.error('❌ [API] CLOUDINARY_API_KEY:', !!process.env.CLOUDINARY_API_KEY);
           console.error('❌ [API] CLOUDINARY_API_SECRET:', !!process.env.CLOUDINARY_API_SECRET);
           return res.status(500).json({
@@ -183,6 +180,8 @@ export default async function handler(req, res) {
             error: 'Cloudinary not configured - check environment variables'
           });
         }
+        
+        console.log('✅ [API] Cloudinary configured successfully');
 
         try {
           console.log('☁️ [API] Uploading image to Cloudinary...');
