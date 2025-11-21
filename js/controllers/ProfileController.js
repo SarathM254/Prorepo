@@ -168,27 +168,17 @@ const ProfileController = {
      * Renders the avatar with super admin indicator
      * @param {Object} user - User profile data
      */
-    async renderAvatar(user) {
+    renderAvatar(user) {
         const avatarContainer = document.getElementById('profileAvatar');
         const avatarBadge = document.getElementById('avatarBadge');
         
         if (!avatarContainer) return;
         
         if (user.isSuperAdmin === true) {
-            // Super admin: Bull logo - fetch from API
-            let bullLogoUrl = 'Bull.png'; // Fallback
-            
-            try {
-                const response = await fetch('/api/bull-logo');
-                const data = await response.json();
-                if (data.success && data.url) {
-                    bullLogoUrl = data.url;
-                }
-            } catch (error) {
-                console.error('Error fetching bull logo:', error);
-            }
-            
-            avatarContainer.innerHTML = `<img src="${bullLogoUrl}" alt="Super Admin" class="avatar-bull-logo" onerror="this.src='Bull.png'">`;
+            // Super admin: Bull logo from Cloudinary
+            // URL is set in js/config/bull-logo.js
+            const bullLogoUrl = window.BULL_LOGO_URL || '';
+            avatarContainer.innerHTML = `<img src="${bullLogoUrl}" alt="Super Admin" class="avatar-bull-logo">`;
             avatarContainer.classList.add('super-admin');
             
             if (avatarBadge) {
@@ -380,7 +370,7 @@ const ProfileController = {
      * Updates the navigation icon on the profile page
      * @param {Object} user - User profile data
      */
-    async updateNavigationIcon(user) {
+    updateNavigationIcon(user) {
         const regularIcon = document.getElementById('regularUserIcon');
         const superAdminLogo = document.getElementById('superAdminLogo');
         const iconWrapper = document.querySelector('.profile-icon-wrapper');
@@ -388,20 +378,9 @@ const ProfileController = {
         if (user && user.isSuperAdmin === true) {
             if (regularIcon) regularIcon.style.display = 'none';
             if (superAdminLogo) {
-                // Fetch bull logo URL from API
-                try {
-                    const response = await fetch('/api/bull-logo');
-                    const data = await response.json();
-                    if (data.success && data.url) {
-                        superAdminLogo.src = data.url;
-                    } else {
-                        // Fallback to local file
-                        superAdminLogo.src = 'Bull.png';
-                    }
-                } catch (error) {
-                    console.error('Error fetching bull logo:', error);
-                    // Fallback to local file
-                    superAdminLogo.src = 'Bull.png';
+                // Set the bull logo URL from config
+                if (window.BULL_LOGO_URL) {
+                    superAdminLogo.src = window.BULL_LOGO_URL;
                 }
                 superAdminLogo.style.display = 'block';
                 if (iconWrapper) iconWrapper.classList.add('has-super-admin');

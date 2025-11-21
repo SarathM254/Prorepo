@@ -1,193 +1,308 @@
 # Proto - Campus News Website
 
-A modern, responsive campus news platform with user authentication and MVC architecture.
+## Overview
 
-## Quick Start
+Proto is a modern, responsive campus news platform built with a clean MVC architecture. The website is deployed on Vercel and uses MongoDB Atlas for data persistence and Cloudinary for image storage.
 
-1. **Install & Run**:
-```bash
-cd backend
-npm install
-npm start
+## Architecture & Design Patterns
+
+### MVC (Model-View-Controller) Pattern
+
+The application follows MVC architecture for clean separation of concerns:
+
+**Model Layer** (`js/models/`)
+- `ArticleModel.js` - Handles all data operations and API communications
+  - Fetches articles from MongoDB Atlas
+  - Submits new articles with images to Cloudinary
+  - Manages user profile data
+  - Handles authentication token management
+
+**View Layer** (`js/views/`)
+- `ArticleView.js` - Renders article cards in responsive grid layouts
+  - Supports infinite scroll on mobile devices
+  - Handles different screen sizes (mobile, tablet, desktop)
+  - Displays article images from Cloudinary CDN
+- `ProfileView.js` - Renders user profile modal
+  - Shows user information and super admin indicators
+  - Handles profile edit functionality
+- `FormView.js` - Manages article submission form
+  - Image preview and adjustment interface
+  - Form validation and submission handling
+
+**Controller Layer** (`js/controllers/`)
+- `AppController.js` - Central business logic coordinator
+  - Orchestrates interactions between models and views
+  - Manages event handlers and user interactions
+  - Handles infinite scroll logic for mobile
+  - Controls authentication flow
+
+### Utility Functions (`js/utils/`)
+- `helpers.js` - Reusable helper functions
+  - Time formatting utilities
+  - Date manipulation helpers
+
+## Core Features & Algorithms
+
+### 1. Authentication System
+
+**Registration Algorithm:**
+- Email normalization (converts to lowercase, trims whitespace)
+- Password hashing using bcrypt before storage
+- Duplicate email prevention (case-insensitive check)
+- Super admin automatic detection (specific email gets elevated privileges)
+- Session token generation and storage
+
+**Login Algorithm:**
+- Email normalization and lookup in MongoDB
+- Password verification using bcrypt comparison
+- Session token creation and localStorage persistence
+- Automatic super admin status detection and database update
+- Error handling with specific messages for invalid email vs password
+
+**Authentication Status Check:**
+- Token validation via Bearer token in Authorization header
+- User lookup in MongoDB to verify token validity
+- Super admin status check and update if needed
+- Returns user object with privileges
+
+### 2. Article Management System
+
+**Article Fetching Algorithm:**
+- Connects to MongoDB Atlas (cached connection for serverless efficiency)
+- Queries articles collection with status filter (approved articles only)
+- Sorts by creation date (newest first)
+- Returns paginated results for performance
+
+**Article Submission Algorithm:**
+1. Form validation (title, body, tag required)
+2. Image processing:
+   - Image file converted to base64
+   - Image dimensions adjusted if needed (via canvas manipulation)
+   - Image uploaded to Cloudinary with optimization settings
+   - Cloudinary returns optimized CDN URL
+3. Article data structure creation:
+   - Combines text content with Cloudinary image URL
+   - Sets author information from authenticated user
+   - Timestamps with current date/time
+   - Status set to 'approved'
+4. MongoDB insertion with new article document
+5. Response returns complete article object for immediate display
+
+**Image Optimization Logic:**
+- Client-side image adjustment before upload
+- Cloudinary automatic transformations:
+  - Width: 1500px
+  - Height: 1100px
+  - Crop: fill (maintains aspect ratio)
+  - Quality: auto (optimal compression)
+  - Format: auto (WebP when supported)
+- CDN delivery for fast global image loading
+
+### 3. Super Admin System
+
+**Super Admin Detection Algorithm:**
+- Email-based detection (specific email address)
+- Automatic flag setting in database during login/registration
+- Database migration logic (updates existing records if flag missing)
+- Visual indicator (crown icon) displayed in navigation
+
+**Admin Panel Access Control:**
+- Server-side verification of super admin status
+- Token-based authentication for admin API endpoints
+- User management capabilities (view, create, delete users)
+- Protection against self-deletion
+
+### 4. Responsive Design Logic
+
+**Layout Algorithm:**
+- Mobile (≤768px): Single column, infinite scroll, bottom navigation
+- Tablet (769-1024px): Two column grid, pagination
+- Desktop (≥1025px): Three column grid, fixed layout
+
+**Infinite Scroll Implementation:**
+- Intersection Observer API for scroll detection
+- Loads more articles when user scrolls near bottom (mobile only)
+- Debounced scroll handler for performance
+- Loading state management during data fetch
+
+### 5. State Management
+
+**Local Storage Strategy:**
+- Authentication token stored in localStorage
+- Super admin status cached for quick access
+- Persistent login state across browser sessions
+
+**Session Management:**
+- Bearer token authentication
+- Token validation on every protected API call
+- Automatic redirect to login if token invalid/expired
+
+## Data Flow Architecture
+
+### Article Submission Flow:
+```
+User Input → FormView Validation → Image Processing → 
+Base64 Conversion → API Call → Cloudinary Upload → 
+Get CDN URL → MongoDB Save → Response → UI Update
 ```
 
-2. **Access**: Open `http://localhost:3000`
+### Article Loading Flow:
+```
+Page Load → AppController Init → ArticleModel Fetch → 
+MongoDB Query → Data Transform → ArticleView Render → 
+Responsive Layout Application
+```
 
-3. **Default Login**:
-   - Email: `admin@proto.com`
-   - Password: `admin123`
+### Authentication Flow:
+```
+Login Form → Email/Password → API Validation → 
+MongoDB Lookup → bcrypt Compare → Token Generation → 
+localStorage Save → Redirect to Main App
+```
 
-## 📁 Project Structure (MVC Architecture)
+## API Structure
+
+All APIs are Vercel serverless functions located in `/api` folder:
+
+**Authentication APIs:**
+- `POST /api/login` - User authentication
+- `POST /api/register` - New user registration
+- `POST /api/logout` - Session termination
+- `GET /api/auth/status` - Check authentication state
+
+**Article APIs:**
+- `GET /api/articles` - Fetch all approved articles
+- `POST /api/articles` - Create new article with image
+
+**Profile APIs:**
+- `GET /api/profile` - Get user profile data
+- `PUT /api/profile` - Update user profile
+
+**Admin APIs (Super Admin Only):**
+- `GET /api/admin/users` - List all users
+- `POST /api/admin/users` - Create new user
+- `DELETE /api/admin/users/:userId` - Delete specific user
+- `DELETE /api/admin/users` - Delete all users (except super admin)
+
+## Database Schema
+
+**MongoDB Collections:**
+
+**Users Collection:**
+- `_id` - ObjectId (unique identifier)
+- `name` - String (user's display name)
+- `email` - String (unique, indexed, case-insensitive)
+- `password` - String (bcrypt hashed)
+- `isSuperAdmin` - Boolean (admin privileges flag)
+- `created_at` - Date (account creation timestamp)
+
+**Articles Collection:**
+- `_id` - ObjectId (unique identifier)
+- `title` - String (article headline)
+- `body` - String (article content)
+- `tag` - String (category: Campus, Sports, Events, Opinion)
+- `image_path` - String (Cloudinary CDN URL)
+- `author_name` - String (display name of author)
+- `status` - String ('approved' | 'pending')
+- `created_at` - Date (publication timestamp)
+
+## Image Storage Strategy
+
+**Cloudinary Configuration:**
+- Images uploaded to 'proto-articles' folder
+- Automatic format optimization (WebP conversion)
+- Responsive image delivery via CDN
+- Automatic compression for optimal file size
+- Secure HTTPS URLs for all images
+
+## Security Features
+
+**Password Security:**
+- bcrypt hashing with salt rounds
+- Passwords never stored in plain text
+- Secure password comparison
+
+**API Security:**
+- Bearer token authentication
+- Server-side validation for all inputs
+- CORS configuration for cross-origin requests
+- Super admin verification on protected endpoints
+
+**Data Validation:**
+- Email format validation
+- Input sanitization
+- Required field checks
+- File type validation for images
+
+## Performance Optimizations
+
+**Database Connection Caching:**
+- MongoDB connection reused across serverless function invocations
+- Connection health checks before reuse
+- Automatic reconnection on failure
+
+**Image Loading:**
+- Cloudinary CDN for global distribution
+- Automatic image optimization and compression
+- Lazy loading for article images
+
+**Frontend Optimizations:**
+- Modular CSS files (load only needed styles)
+- Debounced scroll handlers
+- Efficient DOM updates
+- LocalStorage caching for auth state
+
+## File Organization
 
 ```
 Proto/
-├── css/                        # CSS Modules (9 files)
-│   ├── base.css               # Foundation styles
-│   ├── header.css             # Top navigation
-│   ├── navigation.css         # Bottom nav
-│   ├── cards.css              # Article cards
-│   ├── forms.css              # Submission form
-│   ├── profile.css            # Profile modal
-│   ├── footer.css             # Footer
-│   ├── loading.css            # Loading states
-│   └── auth.css               # Login/register
+├── api/                    # Vercel serverless functions
+│   ├── articles.js        # Article CRUD operations
+│   ├── login.js           # Authentication
+│   ├── register.js        # User registration
+│   ├── profile.js         # Profile management
+│   └── admin/             # Admin APIs
+│       └── users.js       # User management
 │
-├── js/                         # JavaScript Modules (8 files)
-│   ├── models/
-│   │   └── ArticleModel.js    # Data & API calls
-│   ├── views/
-│   │   ├── ArticleView.js     # Article rendering
-│   │   ├── ProfileView.js     # Profile UI
-│   │   └── FormView.js        # Form UI
-│   ├── controllers/
-│   │   └── AppController.js   # Business logic
-│   ├── utils/
-│   │   └── helpers.js         # Helper functions
-│   ├── auth/
-│   │   └── login.js           # Authentication
-│   └── app.js                 # Entry point
+├── js/
+│   ├── models/            # Data layer
+│   │   └── ArticleModel.js
+│   ├── views/             # UI layer
+│   │   ├── ArticleView.js
+│   │   ├── ProfileView.js
+│   │   └── FormView.js
+│   ├── controllers/       # Logic layer
+│   │   └── AppController.js
+│   ├── utils/             # Helpers
+│   │   └── helpers.js
+│   └── auth/              # Auth logic
+│       └── login.js
 │
-├── backend/
-│   ├── server.js              # Express server & API
-│   ├── database.js            # SQLite database
-│   └── package.json
+├── css/                   # Modular stylesheets
+│   ├── base.css          # Foundation styles
+│   ├── cards.css         # Article cards
+│   ├── forms.css         # Form styling
+│   ├── navigation.css    # Navigation bars
+│   ├── profile.css       # Profile modal
+│   └── ...
 │
-├── index.html                 # Main page
-└── login.html                 # Login/register page
+└── index.html            # Main application page
 ```
 
-## 🎯 Code Organization (MVC Pattern)
+## Responsive Breakpoints
 
-**Model** (`js/models/`) - Handles data and API calls
-- `ArticleModel.js` - Fetch/submit articles, user profile, logout
+- **Mobile**: ≤768px - Single column, infinite scroll
+- **Tablet**: 769-1024px - Two column grid
+- **Desktop**: ≥1025px - Three column fixed grid
 
-**View** (`js/views/`) - Handles UI rendering
-- `ArticleView.js` - Renders articles and layouts
-- `ProfileView.js` - Renders profile modal
-- `FormView.js` - Renders article submission form
+## Browser Compatibility
 
-**Controller** (`js/controllers/`) - Handles logic and events
-- `AppController.js` - Connects models and views, event handling
-
-**Utils** (`js/utils/`) - Helper functions
-- `helpers.js` - Time formatting, utilities
-
-## ✨ Features
-
-### User Features
-- 🔐 Login/Registration with secure authentication
-- 👤 Profile management (view/edit)
-- 📝 Article submission form
-- 📱 Fully responsive (mobile/tablet/desktop)
-- ♾️ Infinite scroll on mobile
-- 🎨 Modern, clean UI
-
-### Technical Features
-- **MVC Architecture** - Clean separation of concerns
-- **Modular CSS** - 9 component-based files
-- **Modular JS** - 8 organized modules
-- **Session Management** - Secure cookie-based sessions
-- **SQLite Database** - Lightweight, file-based
-- **RESTful API** - Clean API endpoints
-
-## 🔌 API Endpoints
-
-### Authentication
-- `POST /api/login` - User login
-- `POST /api/register` - Create account
-- `POST /api/logout` - Logout
-- `GET /api/auth/status` - Check auth status
-
-### Articles
-- `GET /api/articles` - Get all articles
-- `POST /api/articles` - Submit new article
-
-### Profile
-- `GET /api/profile` - Get user profile
-- `PUT /api/profile` - Update profile
-
-## 🛠️ Quick Reference
-
-### Need to modify...?
-
-| What | Files |
-|------|-------|
-| Article display | `css/cards.css` + `js/views/ArticleView.js` |
-| Login page | `css/auth.css` + `js/auth/login.js` |
-| Submission form | `css/forms.css` + `js/views/FormView.js` |
-| Profile modal | `css/profile.css` + `js/views/ProfileView.js` |
-| Navigation | `css/navigation.css` or `css/header.css` |
-| API calls | `js/models/ArticleModel.js` |
-| Business logic | `js/controllers/AppController.js` |
-| Responsive design | `@media` queries in CSS files |
-
-## 📱 Responsive Breakpoints
-
-- **Mobile**: ≤768px (single column, infinite scroll, bottom nav)
-- **Tablet**: 769-1024px (2 columns)
-- **Desktop**: ≥1025px (3 columns, fixed grid)
-
-## 🔧 Development Tips
-
-### Adding New Features
-1. **Model**: Add data operations in `js/models/ArticleModel.js`
-2. **View**: Add rendering in appropriate view file
-3. **Controller**: Add event handling in `js/controllers/AppController.js`
-4. **Styles**: Create or update relevant CSS file
-
-### File Organization Rules
-- Keep files under 300 lines
-- One responsibility per file
-- CSS organized by component
-- JS organized by MVC layer
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| Port 3000 in use | Change PORT in `server.js` or kill process |
-| Database errors | Delete `proto.db` and restart server |
-| Session issues | Enable cookies, use `localhost:3000` |
-| Styling broken | Check browser console, verify CSS files load |
-| JS errors | Check console, verify script loading order |
-
-## 🔒 Security
-
-- ✅ Passwords hashed with bcrypt
-- ✅ Server-side session management
-- ✅ Input validation on all endpoints
-- ✅ CORS configured for development
-
-## 📦 Dependencies
-
-**Backend** (see `backend/package.json`):
-- express - Web server
-- express-session - Session management
-- bcrypt - Password hashing
-- sqlite3 - Database
-- cors - Cross-origin requests
-- multer - File uploads
-
-## 🚀 Production Deployment (Optional)
-
-For production, consider:
-1. Use environment variables for secrets
-2. Enable HTTPS
-3. Use production database (PostgreSQL/MySQL)
-4. Add module bundling (Webpack)
-5. Minify CSS/JS
-6. Add caching headers
-7. Implement rate limiting
-
-## 📝 Notes
-
-- This is a **campus news website** with article submission capabilities
-- Code is organized in **MVC pattern** for maintainability
-- **Mobile-first design** with full responsive support
-- All original monolithic files have been split into modules
-- Website functionality remains **100% identical** to before reorganization
+- Modern browsers (Chrome, Firefox, Safari, Edge)
+- ES6+ JavaScript features
+- CSS Grid and Flexbox support
+- LocalStorage API support
 
 ---
 
-**Version**: 2.0 (Modular Architecture)  
-**Last Updated**: November 10, 2025
+**Last Updated**: Features and algorithms documentation
+**Version**: Production-ready with MongoDB Atlas and Cloudinary integration

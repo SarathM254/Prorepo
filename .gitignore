@@ -36,3 +36,6 @@ build/
 # Batch files (local development only)
 *.bat
 
+# Bull logo (uploaded to Cloudinary, URL stored in js/config/bull-logo.js)
+Bull.png
+
