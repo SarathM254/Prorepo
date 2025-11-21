@@ -18,15 +18,15 @@ const AdminPanelView = {
         }
 
         const modal = document.createElement('div');
-        modal.className = 'admin-panel-modal';
         
         if (this.isMobile()) {
+            modal.className = 'admin-panel-modal';
             // Mobile: Show message popup
             modal.innerHTML = `
                 <div class="modal-content mobile-admin-message">
                     <div class="modal-header">
                         <h2><i class="fas fa-crown"></i> Admin Panel</h2>
-                        <button class="close-modal">&times;</button>
+                        <button class="close-modal" id="closeMobileAdmin">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="mobile-message-content">
@@ -34,20 +34,39 @@ const AdminPanelView = {
                             <h3>Desktop View Required</h3>
                             <p>Admin controls are available in desktop view only.</p>
                             <p>Please access the admin panel from a desktop or tablet device (width > 768px).</p>
-                            <button class="close-message-btn" onclick="AdminPanelView.closeAdminPanel()">
+                            <button class="close-message-btn" id="closeMobileAdminBtn">
                                 <i class="fas fa-times"></i> Close
                             </button>
                         </div>
                     </div>
                 </div>
             `;
+            
+            // Add event listeners for mobile close buttons
+            setTimeout(() => {
+                const closeBtn = modal.querySelector('#closeMobileAdmin');
+                const closeBtn2 = modal.querySelector('#closeMobileAdminBtn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => this.closeAdminPanel());
+                }
+                if (closeBtn2) {
+                    closeBtn2.addEventListener('click', () => this.closeAdminPanel());
+                }
+                // Close on backdrop click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.closeAdminPanel();
+                    }
+                });
+            }, 10);
         } else {
             // Desktop: Full-screen admin panel
+            modal.className = 'admin-panel-modal fullscreen-mode';
             modal.innerHTML = `
                 <div class="admin-panel-fullscreen">
                     <div class="admin-panel-header">
                         <h1><i class="fas fa-crown"></i> Admin Panel</h1>
-                        <button class="close-admin-panel" onclick="AdminPanelView.closeAdminPanel()">
+                        <button class="close-admin-panel" id="closeDesktopAdmin">
                             <i class="fas fa-times"></i> Close
                         </button>
                     </div>
@@ -112,9 +131,18 @@ const AdminPanelView = {
 
         // Initialize admin panel if desktop
         if (!this.isMobile()) {
+            // Add event listener for close button
             setTimeout(() => {
+                const closeBtn = modal.querySelector('#closeDesktopAdmin');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => this.closeAdminPanel());
+                }
+                
+                // Initialize admin controller
                 if (typeof AdminController !== 'undefined') {
                     AdminController.initInModal();
+                } else {
+                    console.error('AdminController not loaded');
                 }
             }, 100);
         }

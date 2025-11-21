@@ -32,7 +32,7 @@ const AdminController = {
         // Check if user is super admin
         const isSuperAdmin = await this.checkSuperAdminAccess();
         if (!isSuperAdmin) {
-            this.showError('Access denied. Super admin access required.');
+            this.showErrorInModal('Access denied. Super admin access required.');
             setTimeout(() => {
                 if (typeof AdminPanelView !== 'undefined') {
                     AdminPanelView.closeAdminPanel();
