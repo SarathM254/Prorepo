@@ -117,7 +117,7 @@ const ProfileView = {
      * Updates the profile button in the navigation
      * @param {Object} user - User profile data
      */
-    updateProfileButton(user) {
+    async updateProfileButton(user) {
         const profileBtnSpan = document.querySelector('.bottom-nav .nav-item:last-child span');
         const regularIcon = document.getElementById('regularUserIcon');
         const superAdminLogo = document.getElementById('superAdminLogo');
@@ -133,6 +133,21 @@ const ProfileView = {
         if (user && user.isSuperAdmin === true) {
             if (regularIcon) regularIcon.style.display = 'none';
             if (superAdminLogo) {
+                // Fetch bull logo URL from API
+                try {
+                    const response = await fetch('/api/bull-logo');
+                    const data = await response.json();
+                    if (data.success && data.url) {
+                        superAdminLogo.src = data.url;
+                    } else {
+                        // Fallback to local file
+                        superAdminLogo.src = 'Bull.png';
+                    }
+                } catch (error) {
+                    console.error('Error fetching bull logo:', error);
+                    // Fallback to local file
+                    superAdminLogo.src = 'Bull.png';
+                }
                 superAdminLogo.style.display = 'block';
                 if (iconWrapper) iconWrapper.classList.add('has-super-admin');
             }
