@@ -80,15 +80,23 @@ const AppController = {
             const data = await response.json();
             
             if (data.authenticated) {
+                // Store super admin status
+                if (data.user.isSuperAdmin) {
+                    localStorage.setItem('isSuperAdmin', 'true');
+                } else {
+                    localStorage.removeItem('isSuperAdmin');
+                }
                 ProfileView.updateProfileButton(data.user);
             } else {
                 console.log("Not authenticated - redirecting to login");
                 localStorage.removeItem('authToken');
+                localStorage.removeItem('isSuperAdmin');
                 window.location.href = '/login.html';
             }
         } catch (error) {
             console.error('Auth check failed:', error);
             localStorage.removeItem('authToken');
+            localStorage.removeItem('isSuperAdmin');
             window.location.href = '/login.html';
         }
     },
@@ -393,6 +401,15 @@ const AppController = {
         modal.querySelector('#logoutBtn').addEventListener('click', () => this.handleLogout());
         modal.querySelector('#saveProfileBtn').addEventListener('click', () => this.handleSaveProfile());
         modal.querySelector('#cancelEditBtn').addEventListener('click', () => this.handleCancelEditProfile());
+        
+        // Admin panel button (if exists)
+        const adminPanelBtn = modal.querySelector('#adminPanelBtn');
+        if (adminPanelBtn) {
+            adminPanelBtn.addEventListener('click', () => {
+                window.location.href = '/admin.html';
+            });
+        }
+        
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 ProfileView.closeProfileModal();

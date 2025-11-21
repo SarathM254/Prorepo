@@ -68,9 +68,9 @@ async function login(email, password) {
             window.location.href = '/index.html';
         } else {
             if (response.status === 404) {
-                showError(data.error, 'email');
+                showError(data.error || 'Invalid email. Try sign in instead', 'email');
             } else if (response.status === 401) {
-                showError(data.error, 'password');
+                showError(data.error || 'Invalid password', 'password');
             } else {
                 showError(data.error || 'Login failed');
             }
@@ -130,7 +130,11 @@ async function register(name, email, password) {
                 window.location.href = '/index.html';
             }, 2000);
         } else {
-            showError(data.error || 'Registration failed', 'regEmail');
+            if (response.status === 409) {
+                showError(data.error || 'This email is already used', 'regEmail');
+            } else {
+                showError(data.error || 'Registration failed', 'regEmail');
+            }
         }
     } catch (error) {
         console.error('Registration error:', error);

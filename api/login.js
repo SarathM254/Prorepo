@@ -75,7 +75,7 @@ export default async function handler(req, res) {
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: 'This email address is not registered.'
+        error: 'Invalid email. Try sign in instead'
       });
     }
 
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
     if (!isValidPassword) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid password.'
+        error: 'Invalid password'
       });
     }
 
@@ -95,7 +95,8 @@ export default async function handler(req, res) {
     const userResponse = {
       id: user._id.toString(),
       name: user.name,
-      email: user.email
+      email: user.email,
+      isSuperAdmin: user.isSuperAdmin || false
     };
 
     res.status(200).json({

@@ -59,6 +59,11 @@ const ProfileView = {
                         </div>
                     </div>
                     <div class="profile-actions">
+                        ${user.isSuperAdmin ? `
+                            <button class="admin-panel-btn" id="adminPanelBtn" style="background: #FFD700; color: #333; margin-bottom: 10px;">
+                                <i class="fas fa-crown"></i> Admin Panel
+                            </button>
+                        ` : ''}
                         <button class="edit-profile-btn" id="editProfileBtn">
                             <i class="fas fa-edit"></i> Edit Profile
                         </button>
@@ -114,10 +119,19 @@ const ProfileView = {
      */
     updateProfileButton(user) {
         const profileBtnSpan = document.querySelector('.bottom-nav .nav-item:last-child span');
+        const crownIcon = document.getElementById('superAdminCrown');
+        
         if (profileBtnSpan && user && user.name) {
             profileBtnSpan.textContent = user.name.split(' ')[0];
         } else if (profileBtnSpan) {
             profileBtnSpan.textContent = 'Profile';
+        }
+        
+        // Show crown for super admin
+        if (user && user.isSuperAdmin && crownIcon) {
+            crownIcon.style.display = 'block';
+        } else if (crownIcon) {
+            crownIcon.style.display = 'none';
         }
     },
 

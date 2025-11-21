@@ -77,24 +77,35 @@ export default async function handler(req, res) {
     const { db } = await connectToDatabase();
     const usersCollection = db.collection('users');
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      });
+    }
+
     // Check if email already exists
     const existingUser = await usersCollection.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        error: 'Email already registered'
+        error: 'This email is already used'
       });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    // Create new user with isSuperAdmin field
+    const normalizedEmail = email.toLowerCase().trim();
     const newUser = {
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       password: hashedPassword,
-      created_at: new Date()
+      created_at: new Date(),
+      isSuperAdmin: normalizedEmail === 'motupallisarathchandra@gmail.com'
     };
 
     const result = await usersCollection.insertOne(newUser);
@@ -108,7 +119,8 @@ export default async function handler(req, res) {
     const userResponse = {
       id: result.insertedId.toString(),
       name: newUser.name,
-      email: newUser.email
+      email: newUser.email,
+      isSuperAdmin: newUser.isSuperAdmin || false
     };
 
     res.status(201).json({
