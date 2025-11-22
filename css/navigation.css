@@ -126,7 +126,12 @@
 }
 
 /* Ensure both icons fit within wrapper */
-.profile-icon-wrapper i,
+.profile-icon-wrapper i {
+    font-size: 1rem;
+    width: 100%;
+    height: 100%;
+}
+
 .profile-icon-wrapper .super-admin-logo {
     width: 100%;
     height: 100%;
