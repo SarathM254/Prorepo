@@ -35,6 +35,21 @@ async function checkAuthStatus() {
 // Check auth status on page load
 checkAuthStatus();
 
+// Handle Google OAuth callback (token in URL)
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
+
+    if (token) {
+        // Store token and redirect
+        localStorage.setItem('authToken', token);
+        window.location.href = '/index.html';
+    } else if (error) {
+        showError(decodeURIComponent(error));
+    }
+});
+
 /**
  * Handles user login
  * @param {string} email - User email
@@ -255,6 +270,14 @@ function clearErrors() {
     document.querySelectorAll('input.error').forEach(e => e.classList.remove('error'));
 }
 
+/**
+ * Handles Google OAuth login - redirects to Google
+ */
+function handleGoogleLogin() {
+    // Redirect to Google OAuth endpoint
+    window.location.href = '/api/auth/google';
+}
+
 // Initialize login page
 document.addEventListener('DOMContentLoaded', () => {
     // Login form submission
@@ -273,6 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             await login(email, password);
         });
+    }
+
+    // Google login button
+    const googleBtn = document.getElementById('googleLoginBtn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', handleGoogleLogin);
     }
 
     // Register button click

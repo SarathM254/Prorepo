@@ -168,6 +168,34 @@ body {
     color: white;
 }
 
+.google-btn {
+    width: 100%;
+    padding: 1rem;
+    background: white;
+    color: #333;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.google-btn:hover {
+    background: #f8f9fa;
+    border-color: #d1d5db;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.google-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .loading {
     display: none;
     text-align: center;
