@@ -1,10 +1,13 @@
 /**
  * Bull Logo Configuration
- * Replace YOUR_CLOUDINARY_BULL_LOGO_URL_HERE with your actual Cloudinary URL
- * after uploading Bull.png to Cloudinary
+ * Cloudinary URL for the bull logo used for super admin users
+ * URL includes transformations for optimal sizing:
+ * - w_200,h_200: Max dimensions for navigation (scaled down)
+ * - c_limit: Maintain aspect ratio
+ * - q_auto: Automatic quality optimization
  */
 
-const BULL_LOGO_URL = 'YOUR_CLOUDINARY_BULL_LOGO_URL_HERE';
+const BULL_LOGO_URL = 'https://res.cloudinary.com/dflmlabms/image/upload/w_200,h_200,c_limit,q_auto/v1763848611/Bull_op7xul.png';
 
 // Export for use in other modules
 if (typeof window !== 'undefined') {
