@@ -6,9 +6,9 @@
     right: 0;
     background: #2c3e50;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
-    padding: 0.3rem 0;
+    padding: 0 1rem;
     z-index: 100;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     height: 60px;
@@ -24,18 +24,21 @@
     padding: 0.2rem 0.5rem;
     transition: color 0.3s ease;
     font-size: 0.7rem;
+    flex: 1;
+    min-width: 0;
+    max-width: none;
 }
 
 .nav-item i {
     font-size: 1rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 0.1rem;
 }
 
-/* Super admin logo should be larger than regular icons */
-.super-admin-logo {
-    width: 2rem !important;
-    height: 2rem !important;
-}
 
 .nav-item.active {
     color: #3498db;
@@ -51,10 +54,11 @@
     color: white !important;
     border-radius: 50px !important;
     padding: 0.4rem 1rem !important;
-    margin: 0 0.5rem !important;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
     transform: translateY(0) !important;
     transition: all 0.3s ease !important;
+    flex: 1;
+    max-width: none;
 }
 
 .add-article-btn:hover {
@@ -66,6 +70,8 @@
 .add-article-btn i {
     font-size: 1.1rem !important;
     margin-bottom: 0.05rem !important;
+    width: 1.2rem !important;
+    height: 1.2rem !important;
 }
 
 .add-article-btn span {
@@ -76,16 +82,20 @@
 /* Super Admin Bull Logo - Replaces user icon */
 .profile-icon-wrapper {
     position: relative;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-bottom: 0.1rem;
 }
 
 .super-admin-logo {
-    width: 2rem;
-    height: 2rem;
+    width: 1.2rem;
+    height: 1.2rem;
     object-fit: contain;
     object-position: center;
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
-    position: relative;
     display: block;
     margin: 0 auto;
 }
@@ -113,6 +123,14 @@
         opacity: 0.8;
         transform: translate(-50%, -50%) scale(1.1);
     }
+}
+
+/* Ensure both icons fit within wrapper */
+.profile-icon-wrapper i,
+.profile-icon-wrapper .super-admin-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 /* Hide regular icon when super admin logo is shown */
