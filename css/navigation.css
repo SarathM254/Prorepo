@@ -24,7 +24,7 @@
     color: #bdc3c7;
     text-decoration: none;
     padding: 0.4rem 0.75rem;
-    transition: all 0.3s ease;
+    transition: color 0.3s ease;
     font-size: 0.65rem;
     flex: 1;
     min-width: 0;
@@ -32,6 +32,8 @@
     height: 100%;
     position: relative;
     overflow: hidden;
+    background-color: transparent;
+    border: none;
 }
 
 .nav-item i {
@@ -39,6 +41,7 @@
     margin-bottom: 0.2rem;
     flex-shrink: 0;
     display: block;
+    transition: filter 0.3s ease, color 0.3s ease;
 }
 
 .nav-item span {
@@ -62,8 +65,15 @@
     display: none;
 }
 
+/* Hover effect - icon glow/brighten only, no background box */
 .nav-item:hover {
     color: white;
+    background-color: transparent;
+}
+
+.nav-item:hover i {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+    transition: filter 0.3s ease;
 }
 
 /* Special styling for add article button */
@@ -103,9 +113,10 @@
     flex-shrink: 0;
 }
 
+/* Remove rising effect - plus icon stays in place on hover */
 .add-article-btn:hover::before {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .add-article-btn i {
@@ -141,6 +152,16 @@
     height: 2.5rem;
     margin-bottom: 0.2rem;
     flex-shrink: 0;
+    transition: filter 0.3s ease;
+}
+
+.nav-item:hover .profile-icon-wrapper i {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+/* Super admin logo hover - combine original gold glow with white hover glow */
+.nav-item:hover .profile-icon-wrapper .super-admin-logo {
+    filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
 }
 
 .profile-icon-wrapper i {
@@ -156,6 +177,7 @@
     object-position: center;
     display: block;
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.6));
+    transition: filter 0.3s ease;
 }
 
 /* Hide regular icon when super admin logo is shown */
