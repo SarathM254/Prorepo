@@ -29,6 +29,12 @@
     margin-bottom: 0.15rem;
 }
 
+/* Super admin logo should be larger than regular icons */
+.super-admin-logo {
+    width: 2rem !important;
+    height: 2rem !important;
+}
+
 .nav-item.active {
     color: #3498db;
 }
@@ -72,8 +78,8 @@
 }
 
 .super-admin-logo {
-    width: 1.15rem;
-    height: 1.15rem;
+    width: 2rem;
+    height: 2rem;
     object-fit: contain;
     object-position: center;
     filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));

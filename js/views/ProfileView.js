@@ -133,9 +133,11 @@ const ProfileView = {
         if (user && user.isSuperAdmin === true) {
             if (regularIcon) regularIcon.style.display = 'none';
             if (superAdminLogo) {
-                // Set the bull logo URL from config
-                if (window.BULL_LOGO_URL) {
-                    superAdminLogo.src = window.BULL_LOGO_URL;
+                // Ensure logo URL is set (should already be in HTML, but set as fallback)
+                if (!superAdminLogo.src || superAdminLogo.src === window.location.href) {
+                    if (window.BULL_LOGO_URL) {
+                        superAdminLogo.src = window.BULL_LOGO_URL;
+                    }
                 }
                 superAdminLogo.style.display = 'block';
                 if (iconWrapper) iconWrapper.classList.add('has-super-admin');
