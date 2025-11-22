@@ -23,6 +23,150 @@ const AdminController = {
 
         // Setup event listeners
         this.setupEventListeners();
+
+        // Load dashboard statistics
+        await this.updateDashboard();
+    },
+
+    /**
+     * Update dashboard statistics
+     */
+    async updateDashboard() {
+        const authToken = localStorage.getItem('authToken');
+        
+        try {
+            // Load articles statistics
+            const articlesResponse = await fetch('/api/admin/articles?limit=1000', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (articlesResponse.ok) {
+                const articlesData = await articlesResponse.json();
+                if (articlesData.success && articlesData.articles) {
+                    const articles = articlesData.articles;
+                    const totalArticles = articles.length;
+                    const approvedArticles = articles.filter(a => a.status === 'approved').length;
+                    const pendingArticles = articles.filter(a => a.status === 'pending').length;
+
+                    // Update article counts
+                    const totalArticlesCount = document.getElementById('totalArticlesCount');
+                    const approvedArticlesCount = document.getElementById('approvedArticlesCount');
+                    const pendingArticlesCount = document.getElementById('pendingArticlesCount');
+                    const articlesBadge = document.getElementById('articlesBadge');
+
+                    if (totalArticlesCount) totalArticlesCount.textContent = totalArticles;
+                    if (approvedArticlesCount) approvedArticlesCount.textContent = approvedArticles;
+                    if (pendingArticlesCount) pendingArticlesCount.textContent = pendingArticles;
+                    if (articlesBadge) articlesBadge.textContent = totalArticles;
+                }
+            }
+
+            // Load users statistics
+            const usersResponse = await fetch('/api/admin/users', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (usersResponse.ok) {
+                const usersData = await usersResponse.json();
+                if (usersData.success && usersData.users) {
+                    const totalUsers = usersData.users.length;
+                    const totalUsersCount = document.getElementById('totalUsersCount');
+                    const usersBadge = document.getElementById('usersBadge');
+
+                    if (totalUsersCount) totalUsersCount.textContent = totalUsers;
+                    if (usersBadge) usersBadge.textContent = totalUsers;
+                }
+            }
+
+            // Update recent activity
+            await this.updateRecentActivity();
+        } catch (error) {
+            console.error('Update dashboard error:', error);
+        }
+    },
+
+    /**
+     * Update recent activity
+     */
+    async updateRecentActivity() {
+        const authToken = localStorage.getItem('authToken');
+        const recentActivity = document.getElementById('recentActivity');
+
+        if (!recentActivity) return;
+
+        try {
+            // Get recent articles
+            const response = await fetch('/api/admin/articles?limit=5&page=1', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.articles && data.articles.length > 0) {
+                    let activityHTML = '<div class="activity-list">';
+                    
+                    data.articles.forEach(article => {
+                        const date = new Date(article.created_at).toLocaleDateString();
+                        const timeAgo = this.getTimeAgo(article.created_at);
+                        const statusBadge = article.status === 'approved' 
+                            ? '<span class="status-badge approved">Approved</span>'
+                            : '<span class="status-badge pending">Pending</span>';
+
+                        activityHTML += `
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-newspaper"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <strong>${this.escapeHtml(article.title)}</strong>
+                                    <p>${this.escapeHtml(article.author_name || 'Unknown')} • ${date} • ${timeAgo}</p>
+                                </div>
+                                <div class="activity-meta">
+                                    ${statusBadge}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    activityHTML += '</div>';
+                    recentActivity.innerHTML = activityHTML;
+                } else {
+                    recentActivity.innerHTML = '<p class="text-muted">No recent activity</p>';
+                }
+            } else {
+                recentActivity.innerHTML = '<p class="text-muted">Failed to load recent activity</p>';
+            }
+        } catch (error) {
+            console.error('Update recent activity error:', error);
+            recentActivity.innerHTML = '<p class="text-muted">Failed to load recent activity</p>';
+        }
+    },
+
+    /**
+     * Get time ago string
+     */
+    getTimeAgo(dateString) {
+        if (typeof Helpers !== 'undefined' && Helpers.getTimeAgo) {
+            return Helpers.getTimeAgo(dateString);
+        }
+        
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        const minutes = Math.floor(diffInSeconds / 60);
+        if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        const days = Math.floor(hours / 24);
+        return `${days} day${days > 1 ? 's' : ''} ago`;
     },
 
     /**
@@ -621,6 +765,9 @@ if (document.readyState === 'loading') {
 } else {
     AdminController.init();
 }
+
+// Make AdminController accessible globally
+window.AdminController = AdminController;
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
