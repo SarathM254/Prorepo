@@ -145,7 +145,7 @@
     display: none;
 }
 
-/* Remove hover effects on add button */
+/* No hover effects on add button - keep it completely static */
 .add-article-btn:hover {
     transform: none;
     background-color: transparent;
@@ -154,7 +154,7 @@
 
 .add-article-btn:hover::before {
     box-shadow: var(--shadow-primary);
-    transform: none;
+    transform: translate(-50%, -50%);
     background: var(--color-primary-gradient);
 }
 
