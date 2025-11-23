@@ -43,7 +43,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: filter var(--transition-base), color var(--transition-base);
+    transition: none;
     line-height: 1;
     width: var(--nav-icon-size);
     height: var(--nav-icon-size);
@@ -71,10 +71,22 @@
     display: none;
 }
 
-/* Hover effect - only on icon/text, not entire area */
+/* Hover effect - subtle color change on icon/text only, no background box or glow */
+.nav-item:hover {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
 .nav-item:hover i,
-.nav-item:hover span {
+.nav-item:hover span,
+.nav-item:hover .profile-icon-wrapper {
     color: white;
+}
+
+/* Ensure hover works on profile icon wrapper children */
+.nav-item:hover .profile-icon-wrapper i,
+.nav-item:hover .profile-icon-wrapper .super-admin-logo {
+    opacity: 1;
 }
 
 /* Special styling for add article button */
@@ -86,7 +98,7 @@
     border-radius: 0;
     box-shadow: none;
     transform: translateY(0);
-    transition: all var(--transition-base);
+    transition: none;
     flex: 1;
     min-width: 0;
     max-width: none;
@@ -106,19 +118,11 @@
     background: var(--color-primary-gradient);
     border-radius: 50%;
     box-shadow: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-base);
+    display: block;
     margin-bottom: 0.3rem;
     flex-shrink: 0;
     position: relative;
     z-index: 1;
-}
-
-.add-article-btn:hover::before {
-    transform: translateY(0);
-    box-shadow: none;
 }
 
 .add-article-btn i {
@@ -129,12 +133,11 @@
     align-items: center;
     justify-content: center;
     position: absolute;
-    top: 0;
+    top: 50%;
     left: 50%;
-    transform: translate(-50%, 0);
-    margin-top: calc(50% - 22px - 0.6rem);
+    transform: translate(-50%, calc(-50% - 0.3rem - 22px));
     z-index: 3;
-    color: white;
+    color: white !important;
     pointer-events: none;
     width: var(--nav-icon-size);
     height: var(--nav-icon-size);
