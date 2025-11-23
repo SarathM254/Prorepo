@@ -1,0 +1,256 @@
+/* ============================================
+   Home Page Navigation - Modern Design
+   ============================================ */
+
+/* Bottom Navigation Bar */
+.home-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-background-dark);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    z-index: var(--z-index-base);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    height: var(--nav-height);
+    max-width: 100vw;
+    overflow: visible;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Navigation Item - Base Styles */
+.home-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    transition: all var(--transition-base);
+    font-size: var(--nav-font-size);
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    position: relative;
+    overflow: visible;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    gap: var(--spacing-xs);
+}
+
+/* Navigation Item Icons */
+.home-nav-item i {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-base);
+    line-height: 1;
+    width: 1.6rem;
+    height: 1.6rem;
+    color: inherit;
+}
+
+/* Navigation Item Text */
+.home-nav-item span {
+    font-size: var(--nav-font-size);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    text-align: center;
+    line-height: 1.2;
+    color: inherit;
+    font-weight: 500;
+}
+
+/* Active State */
+.home-nav-item.active {
+    color: var(--color-white);
+}
+
+.home-nav-item.active i {
+    transform: scale(1.1);
+}
+
+/* Hover Effect - Subtle color change only, no background */
+.home-nav-item:hover {
+    background-color: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+.home-nav-item:hover i,
+.home-nav-item:hover span {
+    color: var(--color-white);
+}
+
+.home-nav-item:hover i {
+    transform: scale(1.05);
+}
+
+/* ============================================
+   Add Article Button - Special Styling
+   ============================================ */
+
+.home-nav-item.add-article-btn {
+    position: relative;
+}
+
+/* Circular gradient background for add button */
+.add-article-btn::before {
+    content: '';
+    width: 2.75rem;
+    height: 2.75rem;
+    background: var(--color-primary-gradient);
+    border-radius: 50%;
+    box-shadow: var(--shadow-primary);
+    display: block;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    transition: all var(--transition-base);
+}
+
+/* Plus icon inside circle */
+.add-article-btn i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(-50% - 1.375rem - var(--spacing-xs)));
+    z-index: 3;
+    color: var(--color-white);
+    pointer-events: none;
+    width: 1.6rem;
+    height: 1.6rem;
+    font-size: 1.6rem;
+}
+
+/* Add button text below circle */
+.add-article-btn span {
+    order: 2;
+    position: relative;
+    z-index: 2;
+    margin-top: 0;
+    padding-top: 0;
+    color: var(--color-white);
+    font-weight: 600;
+}
+
+/* Remove hover effects on add button */
+.add-article-btn:hover {
+    transform: none;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.add-article-btn:hover::before {
+    box-shadow: var(--shadow-primary);
+    transform: none;
+    background: var(--color-primary-gradient);
+}
+
+.add-article-btn:hover i {
+    transform: translate(-50%, calc(-50% - 1.375rem - var(--spacing-xs)));
+    color: var(--color-white);
+}
+
+/* ============================================
+   Profile Icon Wrapper
+   ============================================ */
+
+.profile-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    flex-shrink: 0;
+    transition: color var(--transition-base);
+    overflow: visible;
+}
+
+.profile-icon-wrapper i {
+    font-size: 1.6rem;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+}
+
+/* Super Admin Logo - Same size as other icons */
+.super-admin-logo {
+    width: 1.6rem;
+    height: 1.6rem;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
+    transition: filter var(--transition-base);
+}
+
+/* Hide/show logic for super admin */
+.profile-icon-wrapper.has-super-admin #regularUserIcon {
+    display: none;
+}
+
+.profile-icon-wrapper.has-super-admin #superAdminLogo {
+    display: block;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 480px) {
+    .home-navigation {
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .home-nav-item {
+        padding: var(--spacing-xs);
+    }
+    
+    .home-nav-item i {
+        font-size: 1.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+    
+    .add-article-btn::before {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .add-article-btn i {
+        transform: translate(-50%, calc(-50% - 1.25rem - var(--spacing-xs)));
+    }
+}
+
+/* ============================================
+   Smooth Animations
+   ============================================ */
+
+@keyframes navItemPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.home-nav-item.active i {
+    animation: navItemPulse 2s ease-in-out infinite;
+}
+

@@ -266,8 +266,8 @@
 /* Profile Page Content */
 .profile-page-content {
     margin-top: 60px; /* Header height */
-    padding-bottom: var(--nav-height); /* Bottom nav height - uses variable for consistency */
-    min-height: calc(100vh - 135px);
+    padding-bottom: var(--spacing-lg); /* No bottom nav on profile page */
+    min-height: calc(100vh - 60px);
     background: var(--color-background-light);
 }
 

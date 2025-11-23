@@ -118,7 +118,9 @@ const ProfileView = {
      * @param {Object} user - User profile data
      */
     updateProfileButton(user) {
-        const profileBtnSpan = document.querySelector('.bottom-nav .nav-item:last-child span');
+        // Support both new home-navigation and old bottom-nav for compatibility
+        const profileBtnSpan = document.querySelector('.home-navigation .home-nav-item:last-child span') ||
+                              document.querySelector('.bottom-nav .nav-item:last-child span');
         const regularIcon = document.getElementById('regularUserIcon');
         const superAdminLogo = document.getElementById('superAdminLogo');
         const iconWrapper = document.querySelector('.profile-icon-wrapper');

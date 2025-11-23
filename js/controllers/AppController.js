@@ -202,7 +202,8 @@ const AppController = {
         }
         
         // Profile functionality
-        const profileBtn = document.querySelector('.bottom-nav .nav-item:last-child');
+        const profileBtn = document.querySelector('.home-navigation .home-nav-item:last-child') || 
+                          document.querySelector('.bottom-nav .nav-item:last-child'); // Fallback for compatibility
         if (profileBtn) {
             profileBtn.addEventListener('click', this.handleProfileClick.bind(this));
         }
