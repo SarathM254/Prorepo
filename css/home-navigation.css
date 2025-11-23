@@ -82,20 +82,21 @@
     animation: none;
 }
 
-/* Hover Effect - Subtle color change only, no background */
+/* No hover effects for home and profile icons - keep them static */
 .home-nav-item:hover {
     background-color: transparent;
     box-shadow: none;
     transform: none;
 }
 
-.home-nav-item:hover i,
-.home-nav-item:hover span {
-    color: var(--color-white);
+/* Only apply hover to add button, not home/profile */
+.home-nav-item:not(.add-article-btn):hover i,
+.home-nav-item:not(.add-article-btn):hover span {
+    color: inherit;
 }
 
-.home-nav-item:hover i {
-    transform: scale(1.05);
+.home-nav-item:not(.add-article-btn):hover i {
+    transform: none;
 }
 
 /* ============================================
@@ -104,9 +105,10 @@
 
 .home-nav-item.add-article-btn {
     position: relative;
+    justify-content: center;
 }
 
-/* Circular gradient background for add button */
+/* Circular gradient background for add button - centered in nav item */
 .add-article-btn::before {
     content: '';
     width: 2.75rem;
@@ -116,17 +118,20 @@
     box-shadow: var(--shadow-primary);
     display: block;
     flex-shrink: 0;
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1;
     transition: all var(--transition-base);
 }
 
-/* Plus icon inside circle - centered vertically */
+/* Plus icon inside circle - perfectly centered */
 .add-article-btn i {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, calc(-50% - 1.375rem));
+    transform: translate(-50%, -50%);
     z-index: 3;
     color: var(--color-white);
     pointer-events: none;
@@ -135,15 +140,9 @@
     font-size: 1.6rem;
 }
 
-/* Add button text below circle */
+/* Hide the "Add" text below plus icon */
 .add-article-btn span {
-    order: 2;
-    position: relative;
-    z-index: 2;
-    margin-top: 0;
-    padding-top: 0;
-    color: var(--color-white);
-    font-weight: 600;
+    display: none;
 }
 
 /* Remove hover effects on add button */
@@ -160,7 +159,7 @@
 }
 
 .add-article-btn:hover i {
-    transform: translate(-50%, calc(-50% - 1.375rem));
+    transform: translate(-50%, -50%);
     color: var(--color-white);
 }
 
@@ -235,7 +234,13 @@
     }
     
     .add-article-btn i {
-        transform: translate(-50%, calc(-50% - 1.25rem));
+        transform: translate(-50%, -50%);
+    }
+    
+    .add-article-btn::before {
+        width: 2.5rem;
+        height: 2.5rem;
+        transform: translate(-50%, -50%);
     }
 }
 
