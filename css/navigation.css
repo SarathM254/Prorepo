@@ -17,23 +17,23 @@
 }
 
 .nav-item {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #bdc3c7;
     text-decoration: none;
-    padding: 0.25rem 0.5rem;
-    transition: color var(--transition-base);
+    padding: 0.5rem;
+    transition: none;
     font-size: var(--nav-font-size);
     flex: 1;
     min-width: 0;
     max-width: none;
-    height: 100%;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     background-color: transparent;
     border: none;
+    cursor: pointer;
 }
 
 .nav-item i {
@@ -71,15 +71,10 @@
     display: none;
 }
 
-/* Hover effect - icon glow/brighten only, no background box */
-.nav-item:hover {
+/* Hover effect - only on icon/text, not entire area */
+.nav-item:hover i,
+.nav-item:hover span {
     color: white;
-    background-color: transparent;
-}
-
-.nav-item:hover i {
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-    transition: filter var(--transition-base);
 }
 
 /* Special styling for add article button */
@@ -110,7 +105,7 @@
     height: 44px;
     background: var(--color-primary-gradient);
     border-radius: 50%;
-    box-shadow: var(--shadow-primary);
+    box-shadow: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -123,7 +118,7 @@
 
 .add-article-btn:hover::before {
     transform: translateY(0);
-    box-shadow: var(--shadow-primary);
+    box-shadow: none;
 }
 
 .add-article-btn i {
@@ -134,9 +129,10 @@
     align-items: center;
     justify-content: center;
     position: absolute;
-    top: 50%;
+    top: 0;
     left: 50%;
-    transform: translate(-50%, calc(-50% - 0.3rem - 22px));
+    transform: translate(-50%, 0);
+    margin-top: calc(50% - 22px - 0.6rem);
     z-index: 3;
     color: white;
     pointer-events: none;
@@ -159,28 +155,21 @@
     text-align: center;
 }
 
-/* Profile Icon Wrapper - Standardized Size */
+/* Profile Icon Wrapper - Adjustable for super admin */
 .profile-icon-wrapper {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--nav-icon-size);
-    height: var(--nav-icon-size);
+    width: 1.4rem;
+    height: 1.4rem;
     margin-bottom: var(--spacing-xs);
     flex-shrink: 0;
-    transition: filter var(--transition-base);
+    transition: none;
     overflow: visible;
 }
 
-.nav-item:hover .profile-icon-wrapper i {
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-}
-
-/* Super admin logo hover - combine original gold glow with white hover glow */
-.nav-item:hover .profile-icon-wrapper .super-admin-logo {
-    filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-}
+/* No hover glow effects */
 
 .profile-icon-wrapper i {
     font-size: var(--nav-icon-size);
@@ -191,15 +180,15 @@
     justify-content: center;
 }
 
-/* Super Admin Logo - Standardized Size */
+/* Super Admin Logo - Slightly Larger */
 .super-admin-logo {
-    width: var(--nav-icon-size);
-    height: var(--nav-icon-size);
+    width: 1.4rem;
+    height: 1.4rem;
     object-fit: contain;
     object-position: center;
     display: block;
-    filter: drop-shadow(var(--shadow-gold));
-    transition: filter var(--transition-base);
+    filter: none;
+    transition: none;
 }
 
 /* Hide regular icon when super admin logo is shown */
