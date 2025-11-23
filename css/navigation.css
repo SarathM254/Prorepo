@@ -111,6 +111,14 @@
     overflow: visible;
 }
 
+/* Ensure span is visible and in normal flow */
+.add-article-btn > span {
+    order: 2;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .add-article-btn::before {
     content: '';
     width: 44px;
@@ -155,9 +163,11 @@
     position: relative;
     z-index: 2;
     line-height: 1.2;
-    overflow: hidden;
+    overflow: visible;
     display: block;
     text-align: center;
+    visibility: visible;
+    opacity: 1;
 }
 
 /* Profile Icon Wrapper - Adjustable for super admin */
