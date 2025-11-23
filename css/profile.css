@@ -266,8 +266,8 @@
 /* Profile Page Content */
 .profile-page-content {
     margin-top: 60px; /* Header height */
-    padding-bottom: 65px; /* Bottom nav height */
-    min-height: calc(100vh - 130px);
+    padding-bottom: 75px; /* Bottom nav height (matches .bottom-nav height) */
+    min-height: calc(100vh - 135px);
     background: #f8f9fa;
 }
 
