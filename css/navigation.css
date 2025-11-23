@@ -137,7 +137,7 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, calc(-50% - 0.3rem - 22px));
+    transform: translate(-50%, calc(-50% - 0.3rem - 22px + 0.6rem));
     z-index: 3;
     color: white !important;
     pointer-events: none;
