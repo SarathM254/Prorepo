@@ -111,12 +111,16 @@
     overflow: visible;
 }
 
-/* Ensure span is visible and in normal flow */
+/* Ensure span is visible and in normal flow - appears below circle */
 .add-article-btn > span {
     order: 2;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    position: relative !important;
+    z-index: 10 !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 .add-article-btn::before {
