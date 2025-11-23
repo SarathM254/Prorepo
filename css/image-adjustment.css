@@ -92,8 +92,8 @@
 }
 
 .zoom-control label {
-    color: #667eea;
-    font-size: 1.1rem;
+    color: var(--color-primary-start);
+    font-size: var(--font-size-lg);
     display: flex;
     align-items: center;
 }
@@ -115,10 +115,10 @@
     appearance: none;
     width: 18px;
     height: 18px;
-    background: #667eea;
+    background: var(--color-primary-start);
     border-radius: 50%;
     cursor: grab;
-    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+    box-shadow: var(--shadow-sm);
 }
 
 .zoom-slider::-webkit-slider-thumb:active {
@@ -129,11 +129,11 @@
 .zoom-slider::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background: #667eea;
+    background: var(--color-primary-start);
     border-radius: 50%;
     cursor: grab;
     border: none;
-    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+    box-shadow: var(--shadow-sm);
 }
 
 .zoom-slider::-moz-range-thumb:active {
@@ -143,40 +143,40 @@
 
 .adjustment-hint {
     text-align: center;
-    color: #666;
-    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
 }
 
 .adjustment-hint i {
-    color: #667eea;
+    color: var(--color-primary-start);
 }
 
 /* Remove Image Button */
 .remove-image-btn {
-    padding: 0.7rem 1.5rem;
-    background: #e74c3c;
-    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-danger);
+    color: var(--color-white);
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: var(--font-size-base);
     font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: var(--spacing-sm);
     margin: 0 auto;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
 }
 
 .remove-image-btn:hover {
-    background: #c0392b;
+    background: var(--color-danger-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .remove-image-btn:active {

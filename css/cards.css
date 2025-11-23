@@ -1,41 +1,41 @@
 /* Featured Story */
 .featured-story {
-    margin-bottom: 3rem;
+    margin-bottom: var(--spacing-xxl);
 }
 
 .featured-card {
-    background: white;
+    background: var(--color-white);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .featured-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-xl);
 }
 
 /* News Grid */
 .news-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
+    gap: var(--spacing-xl);
 }
 
 /* Card Styles */
 .news-card {
-    background: white;
+    background: var(--color-white);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    margin-bottom: 1rem;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    margin-bottom: var(--spacing-md);
 }
 
 .news-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-xl);
 }
 
 /* Card Source and Actions */
@@ -43,26 +43,26 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.75rem;
-    font-size: 0.9rem;
-    color: #666;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
 }
 
 .source-icon {
     width: 20px;
     height: 20px;
-    background: #667eea;
+    background: var(--color-primary-start);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 0.5rem;
-    font-size: 0.8rem;
+    margin-right: var(--spacing-sm);
+    font-size: var(--font-size-xs);
 }
 
 .card-source span {
     font-weight: 500;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .card-actions {
@@ -74,17 +74,17 @@
 .share-btn {
     background: none;
     border: none;
-    color: #666;
+    color: var(--color-text-secondary);
     cursor: pointer;
-    padding: 0.5rem;
+    padding: var(--spacing-sm);
     border-radius: 50%;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
 }
 
 .bookmark-btn:hover,
 .share-btn:hover {
     background-color: #f0f0f0;
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .card-image {
@@ -109,51 +109,52 @@
 
 .card-category {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 0.5rem 1rem;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    background: var(--color-primary-gradient);
+    color: var(--color-white);
+    padding: var(--spacing-sm) var(--spacing-md);
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .card-content {
-    padding: 1.5rem;
+    padding: var(--spacing-lg);
 }
 
 .card-title {
-    font-size: 1.25rem;
+    font-size: var(--font-size-lg);
     font-weight: 600;
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--spacing-md);
     line-height: 1.4;
-    color: #2c3e50;
+    color: var(--color-background-dark);
 }
 
 .featured-card .card-title {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
+    font-size: var(--font-size-xxl);
+    margin-bottom: var(--spacing-md);
 }
 
 .card-description {
-    color: #666;
-    margin-bottom: 1rem;
-    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-md);
+    line-height: var(--line-height-base);
 }
 
 .card-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     color: #888;
 }
 
 .author {
     font-weight: 500;
+    color: var(--color-text-secondary);
 }
 
 .time {
