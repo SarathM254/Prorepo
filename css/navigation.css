@@ -71,10 +71,11 @@
     display: none;
 }
 
-/* Hover effect - subtle color change on icon/text only */
+/* Hover effect - subtle color change on icon/text only, no background box */
 .nav-item:hover {
     background-color: transparent;
     box-shadow: none;
+    transform: none;
 }
 
 .nav-item:hover i,
@@ -91,8 +92,8 @@
     margin: 0;
     border-radius: 0;
     box-shadow: none;
-    transform: translateY(0);
-    transition: transform var(--transition-base);
+    transform: none;
+    transition: none;
     flex: 1;
     min-width: 0;
     max-width: none;
@@ -123,15 +124,11 @@
     background: var(--color-primary-gradient);
     border-radius: 50%;
     box-shadow: var(--shadow-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     margin-bottom: var(--spacing-xs);
     flex-shrink: 0;
     position: relative;
     z-index: 1;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .add-article-btn i {
@@ -142,9 +139,9 @@
     align-items: center;
     justify-content: center;
     position: absolute;
-    top: 50%;
+    top: calc(50% - 1.375rem - var(--spacing-xs));
     left: 50%;
-    transform: translate(-50%, calc(-50% - 1.375rem - var(--spacing-xs)));
+    transform: translate(-50%, -50%);
     z-index: 3;
     color: var(--color-white);
     pointer-events: none;
@@ -169,12 +166,17 @@
     opacity: 1;
 }
 
+/* Remove all hover effects on add button - no transform, no background change */
 .add-article-btn:hover {
-    transform: translateY(-2px);
+    transform: none;
+    background-color: transparent;
+    box-shadow: none;
 }
 
 .add-article-btn:hover::before {
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-primary);
+    transform: none;
+    background: var(--color-primary-gradient);
 }
 
 /* Profile Icon Wrapper - Consistent size with other icons */
