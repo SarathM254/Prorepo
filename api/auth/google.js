@@ -35,14 +35,15 @@ async function connectToDatabase() {
 
 // Initialize Google OAuth client
 function getGoogleClient() {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GOOGLE_CLIENT_ID || '88133272458-5sutsbu1jole228ou132r719tjnoirc0.apps.googleusercontent.com';
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || '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';
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || 'https://proto-social.vercel.app/api/auth/google';
   
   if (!clientId || !clientSecret) {
     throw new Error('Google OAuth credentials not configured');
   }
 
-  return new OAuth2Client(clientId, clientSecret, process.env.GOOGLE_REDIRECT_URI);
+  return new OAuth2Client(clientId, clientSecret, redirectUri);
 }
 
 export default async function handler(req, res) {
@@ -72,9 +73,10 @@ export default async function handler(req, res) {
           oauth2Client.setCredentials(tokens);
 
           // Get user info from Google
+          const clientId = process.env.GOOGLE_CLIENT_ID || '88133272458-5sutsbu1jole228ou132r719tjnoirc0.apps.googleusercontent.com';
           const ticket = await oauth2Client.verifyIdToken({
             idToken: tokens.id_token,
-            audience: process.env.GOOGLE_CLIENT_ID
+            audience: clientId
           });
 
           const payload = ticket.getPayload();
@@ -145,18 +147,21 @@ export default async function handler(req, res) {
           const token = `${encodeURIComponent(user.email)}:${encodeURIComponent(user.name)}`;
 
           // Redirect to frontend with token
-          const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/index.html?token=${encodeURIComponent(token)}`;
+          const frontendUrl = process.env.FRONTEND_URL || 'https://proto-social.vercel.app';
+          const redirectUrl = `${frontendUrl}/index.html?token=${encodeURIComponent(token)}`;
           return res.redirect(redirectUrl);
         } catch (error) {
           console.error('Google OAuth callback error:', error);
-          const errorUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login.html?error=${encodeURIComponent(error.message || 'Google authentication failed')}`;
+          const frontendUrl = process.env.FRONTEND_URL || 'https://proto-social.vercel.app';
+          const errorUrl = `${frontendUrl}/login.html?error=${encodeURIComponent(error.message || 'Google authentication failed')}`;
           return res.redirect(errorUrl);
         }
       }
 
       // Handle OAuth error
       if (error) {
-        const errorUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login.html?error=${encodeURIComponent('Google authentication was cancelled')}`;
+        const frontendUrl = process.env.FRONTEND_URL || 'https://proto-social.vercel.app';
+        const errorUrl = `${frontendUrl}/login.html?error=${encodeURIComponent('Google authentication was cancelled')}`;
         return res.redirect(errorUrl);
       }
 

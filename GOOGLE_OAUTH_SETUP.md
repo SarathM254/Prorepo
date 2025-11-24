@@ -34,7 +34,7 @@ This guide will help you set up Google OAuth authentication for your Proto appli
      - `https://your-domain.vercel.app` (your production domain)
    - Authorized redirect URIs:
      - `http://localhost:3000/api/auth/google` (for local development)
-     - `https://your-domain.vercel.app/api/auth/google` (your production domain)
+     - `https://proto-social.vercel.app/api/auth/google` (your production domain)
    - Click "Create"
    - **Copy the Client ID and Client Secret**
 
@@ -47,19 +47,17 @@ This guide will help you set up Google OAuth authentication for your Proto appli
 2. **Add the following variables:**
 
    ```
-   GOOGLE_CLIENT_ID=your-client-id-here.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=your-client-secret-here
-   GOOGLE_REDIRECT_URI=https://your-domain.vercel.app/api/auth/google
-   FRONTEND_URL=https://your-domain.vercel.app
+   GOOGLE_CLIENT_ID=88133272458-5sutsbu1jole228ou132r719tjnoirc0.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=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
+   GOOGLE_REDIRECT_URI=https://proto-social.vercel.app/api/auth/google
+   FRONTEND_URL=https://proto-social.vercel.app
    ```
-
-   **Important:** Replace `your-domain.vercel.app` with your actual Vercel domain.
 
 3. **For Local Development:**
    - Add the same variables with localhost URLs:
    ```
-   GOOGLE_CLIENT_ID=your-client-id-here.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=your-client-secret-here
+   GOOGLE_CLIENT_ID=88133272458-5sutsbu1jole228ou132r719tjnoirc0.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=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
    GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google
    FRONTEND_URL=http://localhost:3000
    ```
@@ -123,9 +121,10 @@ npm install
 
 ### "Redirect URI mismatch"
 - Check that the redirect URI in Google Console matches exactly:
-  - Production: `https://your-domain.vercel.app/api/auth/google`
+  - Production: `https://proto-social.vercel.app/api/auth/google`
   - Development: `http://localhost:3000/api/auth/google`
 - No trailing slashes!
+- Make sure this exact URL is added in Google Cloud Console > Credentials > OAuth 2.0 Client IDs > Authorized redirect URIs
 
 ### "Invalid client"
 - Verify your Client ID is correct
@@ -151,4 +150,7 @@ If you encounter issues:
 2. Verify environment variables are set
 3. Test with Google OAuth Playground: https://developers.google.com/oauthplayground/
 4. Check Google Cloud Console for API usage and errors
+
+
+
 
