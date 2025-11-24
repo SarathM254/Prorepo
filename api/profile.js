@@ -18,7 +18,6 @@ async function connectToDatabase() {
     throw new Error('MONGODB_URI environment variable is not set');
   }
 
-  console.log('🔌 [Profile API] Connecting to MongoDB...');
   const client = new MongoClient(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -26,7 +25,6 @@ async function connectToDatabase() {
 
   try {
     await client.connect();
-    console.log('✅ [Profile API] MongoDB connected');
     const db = client.db('campuzway_main');
 
     cachedClient = client;
@@ -34,7 +32,6 @@ async function connectToDatabase() {
 
     return { client, db };
   } catch (error) {
-    console.error('❌ [Profile API] MongoDB connection error:', error);
     throw error;
   }
 }
@@ -183,7 +180,6 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('Profile error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error'

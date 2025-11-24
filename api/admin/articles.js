@@ -37,7 +37,6 @@ async function connectToDatabase() {
     cachedDb = db;
     return { client, db };
   } catch (error) {
-    console.error('Admin Articles API MongoDB connection error:', error);
     throw error;
   }
 }
@@ -88,7 +87,6 @@ async function requireSuperAdmin(req) {
     
     return { authorized: true, user };
   } catch (error) {
-    console.error('Super admin check error:', error);
     return { authorized: false, error: 'Database error' };
   }
 }
@@ -313,7 +311,6 @@ export default async function handler(req, res) {
                 const publicId = existingArticle.image_path.split('/').slice(-2).join('/').split('.')[0];
                 await cloudinary.uploader.destroy(publicId);
               } catch (deleteError) {
-                console.error('Error deleting old image:', deleteError);
                 // Continue even if deletion fails
               }
             }
@@ -335,7 +332,6 @@ export default async function handler(req, res) {
             
             updateData.image_path = uploadResult.secure_url;
           } catch (uploadError) {
-            console.error('Cloudinary upload error:', uploadError);
             return res.status(500).json({
               success: false,
               error: 'Failed to upload image: ' + uploadError.message
@@ -413,12 +409,12 @@ export default async function handler(req, res) {
           if (cloudinaryConfigured) {
             for (const article of articlesToDelete) {
               if (article.image_path && article.image_path.includes('cloudinary.com')) {
-                try {
-                  const publicId = article.image_path.split('/').slice(-2).join('/').split('.')[0];
-                  await cloudinary.uploader.destroy(publicId);
-                } catch (deleteError) {
-                  console.error('Error deleting image:', deleteError);
-                }
+              try {
+                const publicId = article.image_path.split('/').slice(-2).join('/').split('.')[0];
+                await cloudinary.uploader.destroy(publicId);
+              } catch (deleteError) {
+                // Continue even if deletion fails
+              }
               }
             }
           }
@@ -464,7 +460,6 @@ export default async function handler(req, res) {
                 const publicId = article.image_path.split('/').slice(-2).join('/').split('.')[0];
                 await cloudinary.uploader.destroy(publicId);
               } catch (deleteError) {
-                console.error('Error deleting image:', deleteError);
                 // Continue even if deletion fails
               }
             }
@@ -502,11 +497,13 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('Admin Articles API error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error: ' + error.message
     });
   }
 }
+
+
+
 

@@ -37,7 +37,6 @@ async function connectToDatabase() {
     cachedDb = db;
     return { client, db };
   } catch (error) {
-    console.error('Wipe Users API MongoDB connection error:', error);
     throw error;
   }
 }
@@ -99,19 +98,19 @@ export default async function handler(req, res) {
       isSuperAdmin: { $ne: true } 
     });
 
-    console.log(`✅ Wiped ${result.deletedCount} users from database`);
-
     return res.status(200).json({
       success: true,
       message: `Successfully wiped ${result.deletedCount} users. All existing credentials have been deleted.`,
       deletedCount: result.deletedCount
     });
   } catch (error) {
-    console.error('Wipe users error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error: ' + error.message
     });
   }
 }
+
+
+
 

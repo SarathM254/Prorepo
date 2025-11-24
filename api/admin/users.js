@@ -37,7 +37,6 @@ async function connectToDatabase() {
     cachedDb = db;
     return { client, db };
   } catch (error) {
-    console.error('Admin API MongoDB connection error:', error);
     throw error;
   }
 }
@@ -70,7 +69,6 @@ async function requireSuperAdmin(req) {
     
     return { authorized: true, user };
   } catch (error) {
-    console.error('Super admin check error:', error);
     return { authorized: false, error: 'Database error' };
   }
 }
@@ -218,7 +216,6 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('Admin API error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error: ' + error.message

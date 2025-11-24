@@ -19,7 +19,6 @@ async function connectToDatabase() {
     throw new Error('MONGODB_URI environment variable is not set');
   }
 
-  console.log('🔌 [Register API] Connecting to MongoDB...');
   const client = new MongoClient(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -27,7 +26,6 @@ async function connectToDatabase() {
 
   try {
     await client.connect();
-    console.log('✅ [Register API] MongoDB connected');
     const db = client.db('campuzway_main');
 
     cachedClient = client;
@@ -35,7 +33,6 @@ async function connectToDatabase() {
 
     return { client, db };
   } catch (error) {
-    console.error('❌ [Register API] MongoDB connection error:', error);
     throw error;
   }
 }
@@ -109,9 +106,6 @@ export default async function handler(req, res) {
     };
 
     const result = await usersCollection.insertOne(newUser);
-    
-    console.log('✅ [Register API] User created in MongoDB');
-    console.log('🆔 [Register API] User ID:', result.insertedId.toString());
 
     // Create auth token
     const token = `${encodeURIComponent(newUser.email)}:${encodeURIComponent(newUser.name)}`;
@@ -130,7 +124,6 @@ export default async function handler(req, res) {
       message: 'Registration successful'
     });
   } catch (error) {
-    console.error('Registration error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error'

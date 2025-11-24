@@ -36,7 +36,6 @@ async function connectToDatabase() {
     cachedDb = db;
     return { client, db };
   } catch (error) {
-    console.error('Auth status MongoDB connection error:', error);
     throw error;
   }
 }
@@ -108,7 +107,6 @@ export default async function handler(req, res) {
         });
       }
     } catch (dbError) {
-      console.error('Database lookup error:', dbError);
       // Fall through to return authenticated: false
     }
 
@@ -126,7 +124,7 @@ export default async function handler(req, res) {
       });
     }
   } catch (error) {
-    console.error('Token parsing error:', error);
+    // Silent fail
   }
 
   res.status(200).json({

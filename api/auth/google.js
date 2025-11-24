@@ -151,7 +151,6 @@ export default async function handler(req, res) {
           const redirectUrl = `${frontendUrl}/index.html?token=${encodeURIComponent(token)}`;
           return res.redirect(redirectUrl);
         } catch (error) {
-          console.error('Google OAuth callback error:', error);
           const frontendUrl = process.env.FRONTEND_URL || 'https://proto-social.vercel.app';
           const errorUrl = `${frontendUrl}/login.html?error=${encodeURIComponent(error.message || 'Google authentication failed')}`;
           return res.redirect(errorUrl);
@@ -179,7 +178,6 @@ export default async function handler(req, res) {
 
         return res.redirect(authUrl);
       } catch (error) {
-        console.error('Google OAuth init error:', error);
         return res.status(500).json({
           success: false,
           error: 'Failed to initialize Google OAuth'
@@ -189,7 +187,6 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('Google auth error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'
