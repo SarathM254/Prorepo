@@ -12,10 +12,21 @@ let cachedClient = null;
 let cachedDb = null;
 
 async function connectToDatabase() {
+  // Check cache first
   if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
+    try {
+      // Test connection
+      await cachedClient.db('admin').command({ ping: 1 });
+      return { client: cachedClient, db: cachedDb };
+    } catch (error) {
+      // Connection lost, clear cache
+      console.warn('Cached connection failed, reconnecting...', error.message);
+      cachedClient = null;
+      cachedDb = null;
+    }
   }
 
+  // Validate environment variable
   if (!process.env.MONGODB_URI) {
     throw new Error('MONGODB_URI environment variable is not set');
   }
@@ -23,18 +34,31 @@ async function connectToDatabase() {
   const client = new MongoClient(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // 5 second timeout
+    connectTimeoutMS: 5000,
   });
 
   try {
     await client.connect();
     const db = client.db('campuzway_main');
-
+    
+    // Test the connection
+    await db.command({ ping: 1 });
+    
     cachedClient = client;
     cachedDb = db;
-
+    
     return { client, db };
   } catch (error) {
-    throw error;
+    // Close client if connection failed
+    if (client) {
+      try {
+        await client.close();
+      } catch (closeError) {
+        // Ignore close errors
+      }
+    }
+    throw new Error(`Database connection failed: ${error.message}`);
   }
 }
 
@@ -51,15 +75,52 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      success: false,
+      error: 'Method not allowed' 
+    });
+  }
+
+  // Validate request body exists
+  if (!req.body) {
+    return res.status(400).json({
+      success: false,
+      error: 'Request body is required'
+    });
   }
 
   const { email, password } = req.body;
 
+  // Validate required fields
   if (!email || !password) {
     return res.status(400).json({
       success: false,
       error: 'Email and password are required'
+    });
+  }
+
+  // Validate email format (basic check)
+  if (typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid email format'
+    });
+  }
+
+  // Validate password type
+  if (typeof password !== 'string' || password.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'Password is required'
+    });
+  }
+
+  // Validate environment variables
+  if (!process.env.MONGODB_URI) {
+    console.error('MONGODB_URI is not configured');
+    return res.status(500).json({
+      success: false,
+      error: 'Server configuration error. Please contact support.'
     });
   }
 
@@ -127,9 +188,33 @@ export default async function handler(req, res) {
       message: 'Login successful'
     });
   } catch (error) {
+    // Log the full error for debugging (server-side only)
+    console.error('Login error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      timestamp: new Date().toISOString()
+    });
+
+    // Handle specific error types
+    if (error.message && error.message.includes('MONGODB_URI')) {
+      return res.status(500).json({
+        success: false,
+        error: 'Database configuration error. Please contact support.'
+      });
+    }
+
+    if (error.message && (error.message.includes('connect') || error.message.includes('Database connection failed'))) {
+      return res.status(503).json({
+        success: false,
+        error: 'Unable to connect to database. Please try again in a moment.'
+      });
+    }
+
+    // Generic error - don't expose internal details to users
     return res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'An unexpected error occurred. Please try again.'
     });
   }
 }

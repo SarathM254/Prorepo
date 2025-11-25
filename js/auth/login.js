@@ -175,17 +175,34 @@ async function login(email, password) {
             // Redirect to home
             window.location.href = '/index.html';
         } else {
-            throw new Error(data.error || 'Login failed');
+            // Extract error message from response
+            const errorMsg = data.error || 'Login failed';
+            
+            // Handle specific status codes
+            if (response.status === 503) {
+                throw new Error('Service temporarily unavailable. Please try again in a moment.');
+            } else if (response.status >= 500) {
+                throw new Error('Server error. Please try again later.');
+            } else {
+                throw new Error(errorMsg);
+            }
         }
     } catch (error) {
         console.error('Login error:', error);
         
-        // Show user-friendly error message
+        // Show user-friendly error message based on error type
         let errorMessage = 'Failed to login. Please check your credentials.';
         
-        if (error.message.includes('Server error')) {
-            errorMessage = 'Server error. Please try again later.';
-        } else if (error.message) {
+        // Network errors
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+        }
+        // Server response format errors
+        else if (error.message.includes('Server error') || error.message.includes('Invalid response')) {
+            errorMessage = 'Server error. Please try again in a moment.';
+        }
+        // Specific API error messages (passed through from API)
+        else if (error.message) {
             errorMessage = error.message;
         }
         
@@ -385,13 +402,34 @@ async function register(name, email, password) {
             // Redirect to home
             window.location.href = '/index.html';
         } else {
-            throw new Error(data.error || 'Registration failed');
+            // Extract error message from response
+            const errorMsg = data.error || 'Registration failed';
+            
+            // Handle specific status codes
+            if (response.status === 503) {
+                throw new Error('Service temporarily unavailable. Please try again in a moment.');
+            } else if (response.status >= 500) {
+                throw new Error('Server error. Please try again later.');
+            } else {
+                throw new Error(errorMsg);
+            }
         }
     } catch (error) {
         console.error('Registration error:', error);
         
+        // Show user-friendly error message based on error type
         let errorMessage = 'Failed to register. Please try again.';
-        if (error.message) {
+        
+        // Network errors
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+        }
+        // Server response format errors
+        else if (error.message.includes('Server error') || error.message.includes('Invalid response')) {
+            errorMessage = 'Server error. Please try again in a moment.';
+        }
+        // Specific API error messages (passed through from API)
+        else if (error.message) {
             errorMessage = error.message;
         }
         
