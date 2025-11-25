@@ -10,31 +10,14 @@ const AdminPanel = {
      * Initialize admin panel
      */
     async init() {
-        // Check if user is admin or super admin
-        const access = await this.checkAdminAccess();
-        if (!access.hasAccess) {
-            this.showError('Access denied. Admin access required.');
+        // Check if user is super admin
+        const isSuperAdmin = await this.checkSuperAdminAccess();
+        if (!isSuperAdmin) {
+            this.showError('Access denied. Super admin access required.');
             setTimeout(() => {
                 window.location.href = '/index.html';
             }, 2000);
             return;
-        }
-
-        // Store role information
-        this.userRole = {
-            isSuperAdmin: access.isSuperAdmin,
-            isAdmin: access.isAdmin
-        };
-
-        // Hide users section if not super admin
-        if (!access.isSuperAdmin) {
-            const usersNavItem = document.querySelector('.nav-item[data-section="users"]');
-            const usersSection = document.getElementById('usersSection');
-            const usersStatCard = document.querySelector('.stat-card:has(#totalUsersCount)');
-            
-            if (usersNavItem) usersNavItem.style.display = 'none';
-            if (usersSection) usersSection.style.display = 'none';
-            if (usersStatCard) usersStatCard.style.display = 'none';
         }
 
         // Setup sidebar navigation
@@ -81,37 +64,6 @@ const AdminPanel = {
     },
 
     /**
-     * Check if current user has admin access (admin or super admin)
-     */
-    async checkAdminAccess() {
-        const authToken = localStorage.getItem('authToken');
-        if (!authToken) {
-            return { hasAccess: false };
-        }
-
-        try {
-            const response = await fetch('/api/auth/status', {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
-            const data = await response.json();
-            
-            if (data.authenticated && data.user && (data.user.isSuperAdmin || data.user.isAdmin)) {
-                return {
-                    hasAccess: true,
-                    isSuperAdmin: data.user.isSuperAdmin || false,
-                    isAdmin: data.user.isAdmin || false
-                };
-            }
-            return { hasAccess: false };
-        } catch (error) {
-            console.error('Admin access check error:', error);
-            return { hasAccess: false };
-        }
-    },
-
-    /**
      * Setup sidebar navigation
      */
     setupSidebarNavigation() {
@@ -124,7 +76,10 @@ const AdminPanel = {
                 
                 // Close sidebar on mobile after selection
                 if (window.innerWidth <= 1024) {
-                    this.closeSidebar();
+                    const sidebar = document.getElementById('adminSidebar');
+                    if (sidebar) {
+                        sidebar.classList.remove('open');
+                    }
                 }
             });
         });
@@ -139,117 +94,18 @@ const AdminPanel = {
 
         if (sidebarToggle && sidebar) {
             sidebarToggle.addEventListener('click', () => {
-                this.toggleSidebar();
+                sidebar.classList.toggle('open');
             });
         }
-
-        // Create backdrop overlay
-        this.createBackdropOverlay();
 
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 1024) {
-                if (sidebar && !sidebar.contains(e.target) && 
-                    sidebarToggle && !sidebarToggle.contains(e.target) &&
-                    !e.target.closest('.sidebar-backdrop')) {
-                    this.closeSidebar();
+                if (sidebar && !sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                    sidebar.classList.remove('open');
                 }
             }
         });
-
-        // Close sidebar on window resize if switching to desktop
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                if (window.innerWidth > 1024) {
-                    this.closeSidebar();
-                }
-            }, 250);
-        });
-    },
-
-    /**
-     * Create backdrop overlay for mobile sidebar
-     */
-    createBackdropOverlay() {
-        // Check if backdrop already exists
-        if (document.querySelector('.sidebar-backdrop')) {
-            return;
-        }
-
-        const backdrop = document.createElement('div');
-        backdrop.className = 'sidebar-backdrop';
-        backdrop.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        `;
-        
-        backdrop.addEventListener('click', () => {
-            this.closeSidebar();
-        });
-
-        document.body.appendChild(backdrop);
-    },
-
-    /**
-     * Toggle sidebar open/closed
-     */
-    toggleSidebar() {
-        const sidebar = document.getElementById('adminSidebar');
-        const backdrop = document.querySelector('.sidebar-backdrop');
-        
-        if (sidebar) {
-            if (sidebar.classList.contains('open')) {
-                this.closeSidebar();
-            } else {
-                this.openSidebar();
-            }
-        }
-    },
-
-    /**
-     * Open sidebar
-     */
-    openSidebar() {
-        const sidebar = document.getElementById('adminSidebar');
-        const backdrop = document.querySelector('.sidebar-backdrop');
-        
-        if (sidebar) {
-            sidebar.classList.add('open');
-            document.body.classList.add('sidebar-open');
-            
-            if (backdrop) {
-                backdrop.style.opacity = '1';
-                backdrop.style.visibility = 'visible';
-            }
-        }
-    },
-
-    /**
-     * Close sidebar
-     */
-    closeSidebar() {
-        const sidebar = document.getElementById('adminSidebar');
-        const backdrop = document.querySelector('.sidebar-backdrop');
-        
-        if (sidebar) {
-            sidebar.classList.remove('open');
-            document.body.classList.remove('sidebar-open');
-            
-            if (backdrop) {
-                backdrop.style.opacity = '0';
-                backdrop.style.visibility = 'hidden';
-            }
-        }
     },
 
     /**

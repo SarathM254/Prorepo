@@ -1,6 +1,6 @@
 /**
  * Login Page JavaScript
- * Handles Google OAuth login only
+ * Handles both email/password and Google OAuth login
  */
 
 /**
@@ -42,11 +42,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const error = urlParams.get('error');
 
     if (token) {
-        // Store token and redirect
         localStorage.setItem('authToken', token);
         window.location.href = '/index.html';
-    } else if (error) {
+        return;
+    }
+    
+    if (error) {
         showError(decodeURIComponent(error));
+    }
+
+    // Setup form toggle
+    setupFormToggle();
+    
+    // Setup password toggle
+    setupPasswordToggle();
+
+    // Login form submission
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+            
+            await login(email, password);
+        });
     }
 
     // Google login button
@@ -62,6 +87,111 @@ document.addEventListener('DOMContentLoaded', () => {
 function handleGoogleLogin() {
     // Redirect to Google OAuth endpoint
     window.location.href = '/api/auth/google';
+}
+
+/**
+ * Handles email/password login
+ */
+async function login(email, password) {
+    const loginBtn = document.getElementById('loginBtn');
+    const loading = document.getElementById('loading');
+    const loginBtnText = document.getElementById('loginBtnText');
+    
+    loginBtn.disabled = true;
+    loading.style.display = 'inline-block';
+    loginBtnText.textContent = 'Signing in...';
+    clearErrors();
+    
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Store token
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+            }
+            
+            // Redirect to home
+            window.location.href = '/index.html';
+        } else {
+            throw new Error(data.error || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showError(error.message || 'Failed to login. Please check your credentials.');
+        loginBtn.disabled = false;
+        loading.style.display = 'none';
+        loginBtnText.textContent = 'Sign In';
+    }
+}
+
+/**
+ * Handles form toggle
+ */
+function setupFormToggle() {
+    const emailToggle = document.getElementById('emailLoginToggle');
+    const googleToggle = document.getElementById('googleLoginToggle');
+    const emailForm = document.getElementById('emailLoginForm');
+    const googleSection = document.getElementById('googleLoginSection');
+    
+    if (emailToggle && googleToggle) {
+        emailToggle.addEventListener('click', () => {
+            emailToggle.classList.add('active');
+            googleToggle.classList.remove('active');
+            emailForm.style.display = 'block';
+            googleSection.style.display = 'none';
+        });
+        
+        googleToggle.addEventListener('click', () => {
+            googleToggle.classList.add('active');
+            emailToggle.classList.remove('active');
+            emailForm.style.display = 'none';
+            googleSection.style.display = 'block';
+        });
+    }
+}
+
+/**
+ * Clears error messages
+ */
+function clearErrors() {
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
+}
+
+/**
+ * Sets up password toggle visibility
+ */
+function setupPasswordToggle() {
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('passwordToggle');
+    const toggleIcon = document.getElementById('passwordToggleIcon');
+    
+    if (passwordInput && toggleBtn && toggleIcon) {
+        toggleBtn.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            if (type === 'text') {
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+    }
 }
 
 /**

@@ -131,18 +131,10 @@ const AppController = {
                     console.log("User has password - proceeding normally");
                 }
             } else {
-                // User not authenticated - could be deleted account
-                console.log("Not authenticated - redirecting to login", data.error || '');
+                console.log("Not authenticated - redirecting to login");
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('isSuperAdmin');
-                
-                // Show message if account was deleted
-                if (data.error === 'User account no longer exists') {
-                    const message = encodeURIComponent('Your account has been deleted. Please create a new account to continue.');
-                    window.location.href = `/login.html?error=${message}`;
-                } else {
-                    window.location.href = '/login.html';
-                }
+                window.location.href = '/login.html';
             }
         } catch (error) {
             console.error('Auth check failed:', error);
@@ -492,45 +484,6 @@ const AppController = {
             profileBtn.addEventListener('click', this.handleProfileClick.bind(this));
         }
 
-        // Mobile menu button
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', () => this.openMobileSidebar());
-        }
-
-        // Close mobile sidebar button
-        const closeSidebarBtn = document.getElementById('closeMobileSidebar');
-        if (closeSidebarBtn) {
-            closeSidebarBtn.addEventListener('click', () => this.closeMobileSidebar());
-        }
-
-        // Mobile sidebar overlay
-        const sidebarOverlay = document.getElementById('mobileSidebarOverlay');
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', () => this.closeMobileSidebar());
-        }
-
-        // Desktop navigation links
-        const desktopNavLinks = document.querySelectorAll('.nav-link');
-        desktopNavLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const filter = link.getAttribute('data-filter');
-                this.handleFilterChange(filter);
-            });
-        });
-
-        // Mobile navigation links
-        const mobileNavLinks = document.querySelectorAll('.mobile-nav-item');
-        mobileNavLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const filter = link.getAttribute('data-filter');
-                this.handleFilterChange(filter);
-                this.closeMobileSidebar();
-            });
-        });
-
         // Article submission functionality
         if (FormView.elements.addArticleBtn) {
             FormView.elements.addArticleBtn.addEventListener('click', this.handleOpenArticleForm.bind(this));
@@ -795,68 +748,6 @@ const AppController = {
      */
     handleCloseArticleForm() {
         FormView.closeArticleFormModal();
-    },
-
-    /**
-     * Opens mobile sidebar
-     */
-    openMobileSidebar() {
-        const sidebar = document.getElementById('mobileNavSidebar');
-        const overlay = document.getElementById('mobileSidebarOverlay');
-        if (sidebar && overlay) {
-            sidebar.classList.add('open');
-            overlay.classList.add('active');
-            document.body.classList.add('sidebar-open');
-        }
-    },
-
-    /**
-     * Closes mobile sidebar
-     */
-    closeMobileSidebar() {
-        const sidebar = document.getElementById('mobileNavSidebar');
-        const overlay = document.getElementById('mobileSidebarOverlay');
-        if (sidebar && overlay) {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('active');
-            document.body.classList.remove('sidebar-open');
-        }
-    },
-
-    /**
-     * Handles filter change when navigation item is clicked
-     * @param {string} filterCategory - Category to filter by
-     */
-    handleFilterChange(filterCategory) {
-        console.log(`🔍 [AppController] Filter changed to: ${filterCategory}`);
-        
-        // Filter articles
-        const filteredArticles = ArticleModel.filterArticles(filterCategory);
-        
-        // Update active state on navigation items
-        // Desktop navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
-            if (link.getAttribute('data-filter') === filterCategory) {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
-            }
-        });
-        
-        // Mobile navigation
-        document.querySelectorAll('.mobile-nav-item').forEach(link => {
-            if (link.getAttribute('data-filter') === filterCategory) {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
-            }
-        });
-        
-        // Re-render articles with filtered results
-        this.renderContentBasedOnView(filteredArticles);
-        
-        // Reset scroll position
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     /**

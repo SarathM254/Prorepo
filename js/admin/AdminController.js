@@ -8,36 +8,14 @@ const AdminController = {
      * Initialize admin panel (for admin.html page)
      */
     async init() {
-        // Check if user is admin or super admin
-        const access = await this.checkAdminAccess();
-        if (!access.hasAccess) {
-            this.showError('Access denied. Admin access required.');
+        // Check if user is super admin
+        const isSuperAdmin = await this.checkSuperAdminAccess();
+        if (!isSuperAdmin) {
+            this.showError('Access denied. Super admin access required.');
             setTimeout(() => {
                 window.location.href = '/index.html';
             }, 2000);
             return;
-        }
-
-        // Store role information
-        this.userRole = {
-            isSuperAdmin: access.isSuperAdmin,
-            isAdmin: access.isAdmin
-        };
-
-        // Hide users section if not super admin
-        if (!access.isSuperAdmin) {
-            const usersNavItem = document.querySelector('.nav-item[data-section="users"]');
-            const usersSection = document.getElementById('usersSection');
-            const usersStatCard = document.querySelector('.stat-card:has(#totalUsersCount)');
-            
-            if (usersNavItem) usersNavItem.style.display = 'none';
-            if (usersSection) usersSection.style.display = 'none';
-            // Hide user count stat card
-            const totalUsersCount = document.getElementById('totalUsersCount');
-            if (totalUsersCount) {
-                const statCard = totalUsersCount.closest('.stat-card');
-                if (statCard) statCard.style.display = 'none';
-            }
         }
 
         // Load users
@@ -238,37 +216,6 @@ const AdminController = {
     },
 
     /**
-     * Check if current user has admin access (admin or super admin)
-     */
-    async checkAdminAccess() {
-        const authToken = localStorage.getItem('authToken');
-        if (!authToken) {
-            return { hasAccess: false };
-        }
-
-        try {
-            const response = await fetch('/api/auth/status', {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
-            const data = await response.json();
-            
-            if (data.authenticated && data.user && (data.user.isSuperAdmin || data.user.isAdmin)) {
-                return {
-                    hasAccess: true,
-                    isSuperAdmin: data.user.isSuperAdmin || false,
-                    isAdmin: data.user.isAdmin || false
-                };
-            }
-            return { hasAccess: false };
-        } catch (error) {
-            console.error('Admin access check error:', error);
-            return { hasAccess: false };
-        }
-    },
-
-    /**
      * Load all users from API
      */
     async loadAllUsers() {
@@ -335,14 +282,9 @@ const AdminController = {
                 ? new Date(user.created_at).toLocaleDateString() 
                 : 'N/A';
             
-            let roleBadge = '';
-            if (user.isSuperAdmin) {
-                roleBadge = '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>';
-            } else if (user.isAdmin) {
-                roleBadge = '<span class="admin-badge" style="background: #667eea; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;"><i class="fas fa-shield-halved"></i> Admin</span>';
-            } else {
-                roleBadge = '<span>User</span>';
-            }
+            const roleBadge = user.isSuperAdmin 
+                ? '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>'
+                : '<span>User</span>';
 
             tableHTML += `
                 <tr>
@@ -352,20 +294,9 @@ const AdminController = {
                     <td>${createdDate}</td>
                     <td>
                         ${!user.isSuperAdmin ? `
-                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                ${user.isAdmin ? `
-                                    <button class="btn btn-secondary btn-sm" onclick="AdminController.demoteFromAdmin('${user.id}')" title="Remove Admin">
-                                        <i class="fas fa-user-minus"></i> Remove Admin
-                                    </button>
-                                ` : `
-                                    <button class="btn btn-primary btn-sm" onclick="AdminController.promoteToAdmin('${user.id}')" title="Make Admin">
-                                        <i class="fas fa-user-plus"></i> Make Admin
-                                    </button>
-                                `}
-                                <button class="delete-btn" onclick="AdminController.deleteUser('${user.id}')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </div>
+                            <button class="delete-btn" onclick="AdminController.deleteUser('${user.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
                         ` : '<span style="color: #999;">-</span>'}
                     </td>
                 </tr>
@@ -434,83 +365,14 @@ const AdminController = {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                this.showSuccess(data.message || 'User deleted successfully! All sessions have been invalidated and the user must create a new account.');
+                this.showSuccess('User deleted successfully!');
                 await this.loadAllUsers();
-                await this.updateDashboard(); // Refresh dashboard stats
             } else {
                 throw new Error(data.error || 'Failed to delete user');
             }
         } catch (error) {
             console.error('Delete user error:', error);
             this.showError(error.message || 'Failed to delete user');
-        }
-    },
-
-    /**
-     * Promote user to admin
-     */
-    async promoteToAdmin(userId) {
-        if (!confirm('Are you sure you want to promote this user to admin? They will have access to the admin panel and can manage articles.')) {
-            return;
-        }
-
-        const authToken = localStorage.getItem('authToken');
-
-        try {
-            const response = await fetch('/api/admin/users', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify({ userId, isAdmin: true })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                this.showSuccess(data.message || 'User promoted to admin successfully!');
-                await this.loadAllUsers();
-            } else {
-                throw new Error(data.error || 'Failed to promote user');
-            }
-        } catch (error) {
-            console.error('Promote to admin error:', error);
-            this.showError(error.message || 'Failed to promote user to admin');
-        }
-    },
-
-    /**
-     * Demote user from admin
-     */
-    async demoteFromAdmin(userId) {
-        if (!confirm('Are you sure you want to remove admin privileges from this user? They will lose access to the admin panel.')) {
-            return;
-        }
-
-        const authToken = localStorage.getItem('authToken');
-
-        try {
-            const response = await fetch('/api/admin/users', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify({ userId, isAdmin: false })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                this.showSuccess(data.message || 'User demoted from admin successfully!');
-                await this.loadAllUsers();
-            } else {
-                throw new Error(data.error || 'Failed to demote user');
-            }
-        } catch (error) {
-            console.error('Demote from admin error:', error);
-            this.showError(error.message || 'Failed to demote user from admin');
         }
     },
 
@@ -657,14 +519,9 @@ const AdminController = {
                 ? new Date(user.created_at).toLocaleDateString() 
                 : 'N/A';
             
-            let roleBadge = '';
-            if (user.isSuperAdmin) {
-                roleBadge = '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>';
-            } else if (user.isAdmin) {
-                roleBadge = '<span class="admin-badge" style="background: #667eea; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;"><i class="fas fa-shield-halved"></i> Admin</span>';
-            } else {
-                roleBadge = '<span>User</span>';
-            }
+            const roleBadge = user.isSuperAdmin 
+                ? '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>'
+                : '<span>User</span>';
 
             tableHTML += `
                 <tr>
@@ -674,20 +531,9 @@ const AdminController = {
                     <td>${createdDate}</td>
                     <td>
                         ${!user.isSuperAdmin ? `
-                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                ${user.isAdmin ? `
-                                    <button class="btn btn-secondary btn-sm" onclick="AdminController.demoteFromAdminInModal('${user.id}')" title="Remove Admin">
-                                        <i class="fas fa-user-minus"></i> Remove Admin
-                                    </button>
-                                ` : `
-                                    <button class="btn btn-primary btn-sm" onclick="AdminController.promoteToAdminInModal('${user.id}')" title="Make Admin">
-                                        <i class="fas fa-user-plus"></i> Make Admin
-                                    </button>
-                                `}
-                                <button class="delete-btn" onclick="AdminController.deleteUserInModal('${user.id}')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </div>
+                            <button class="delete-btn" onclick="AdminController.deleteUserInModal('${user.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
                         ` : '<span style="color: #999;">-</span>'}
                     </td>
                 </tr>
@@ -723,7 +569,7 @@ const AdminController = {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                this.showSuccessInModal(data.message || 'User deleted successfully! All sessions have been invalidated and the user must create a new account.');
+                this.showSuccessInModal('User deleted successfully! The user must create a new account to access the system.');
                 await this.loadAllUsersInModal();
             } else {
                 throw new Error(data.error || 'Failed to delete user');
@@ -798,74 +644,6 @@ const AdminController = {
         } catch (error) {
             console.error('Create user error:', error);
             this.showErrorInModal(error.message || 'Failed to create user');
-        }
-    },
-
-    /**
-     * Promote user to admin in modal mode
-     */
-    async promoteToAdminInModal(userId) {
-        if (!confirm('Are you sure you want to promote this user to admin? They will have access to the admin panel and can manage articles.')) {
-            return;
-        }
-
-        const authToken = localStorage.getItem('authToken');
-
-        try {
-            const response = await fetch('/api/admin/users', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify({ userId, isAdmin: true })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                this.showSuccessInModal(data.message || 'User promoted to admin successfully!');
-                await this.loadAllUsersInModal();
-            } else {
-                throw new Error(data.error || 'Failed to promote user');
-            }
-        } catch (error) {
-            console.error('Promote to admin error:', error);
-            this.showErrorInModal(error.message || 'Failed to promote user to admin');
-        }
-    },
-
-    /**
-     * Demote user from admin in modal mode
-     */
-    async demoteFromAdminInModal(userId) {
-        if (!confirm('Are you sure you want to remove admin privileges from this user? They will lose access to the admin panel.')) {
-            return;
-        }
-
-        const authToken = localStorage.getItem('authToken');
-
-        try {
-            const response = await fetch('/api/admin/users', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify({ userId, isAdmin: false })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                this.showSuccessInModal(data.message || 'User demoted from admin successfully!');
-                await this.loadAllUsersInModal();
-            } else {
-                throw new Error(data.error || 'Failed to demote user');
-            }
-        } catch (error) {
-            console.error('Demote from admin error:', error);
-            this.showErrorInModal(error.message || 'Failed to demote user from admin');
         }
     },
 

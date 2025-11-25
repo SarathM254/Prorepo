@@ -115,9 +115,9 @@ export default async function handler(req, res) {
         email: user.email,
         isSuperAdmin: isSuperAdmin,
         isAdmin: user.isAdmin || false,
-        hasPassword: !!user.password, // Check if user has a password set
-        needsPasswordSetup: needsPasswordSetup, // New field - only true for Google users without password
-        authProvider: authProvider // New field - 'google' or 'email'
+        hasPassword: !!user.password,
+        needsPasswordSetup: needsPasswordSetup,
+        authProvider: authProvider
       }
     });
   } catch (dbError) {
