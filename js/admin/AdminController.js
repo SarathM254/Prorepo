@@ -36,7 +36,7 @@ const AdminController = {
         
         try {
             // Load articles statistics
-            const articlesResponse = await fetch('/api/admin/articles?limit=1000', {
+            const articlesResponse = await fetch('/api/admin?type=articles&limit=1000', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -64,7 +64,7 @@ const AdminController = {
             }
 
             // Load users statistics
-            const usersResponse = await fetch('/api/admin/users', {
+            const usersResponse = await fetch('/api/admin?type=users', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -100,7 +100,7 @@ const AdminController = {
 
         try {
             // Get recent articles
-            const response = await fetch('/api/admin/articles?limit=5&page=1', {
+            const response = await fetch('/api/admin?type=articles&limit=5&page=1', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -223,7 +223,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch('/api/admin/users', {
+            const response = await fetch('/api/admin?type=users', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -318,7 +318,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch('/api/admin/users', {
+            const response = await fetch('/api/admin?type=users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -355,7 +355,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch(`/api/admin/users?userId=${userId}`, {
+            const response = await fetch(`/api/admin?type=users&userId=${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
@@ -393,7 +393,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch('/api/admin/users', {
+            const response = await fetch('/api/admin?type=users', {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
@@ -458,7 +458,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch('/api/admin/users', {
+            const response = await fetch('/api/admin?type=users', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -559,7 +559,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch(`/api/admin/users?userId=${userId}`, {
+            const response = await fetch(`/api/admin?type=users&userId=${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
@@ -623,7 +623,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch('/api/admin/users', {
+            const response = await fetch('/api/admin?type=users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -664,7 +664,7 @@ const AdminController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch('/api/admin/users', {
+            const response = await fetch('/api/admin?type=users', {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${authToken}`

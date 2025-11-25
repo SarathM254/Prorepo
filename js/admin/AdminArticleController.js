@@ -171,7 +171,7 @@ const AdminArticleController = {
         }
 
         try {
-            const response = await fetch(`/api/admin/articles?${params.toString()}`, {
+            const response = await fetch(`/api/admin?type=articles&${params.toString()}`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -391,7 +391,7 @@ const AdminArticleController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch(`/api/admin/articles?articleId=${articleId}`, {
+            const response = await fetch(`/api/admin?type=articles&articleId=${articleId}`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
@@ -476,7 +476,7 @@ const AdminArticleController = {
         }
 
         try {
-            const response = await fetch(`/api/admin/articles?articleId=${this.currentArticleId}`, {
+            const response = await fetch(`/api/admin?type=articles&articleId=${this.currentArticleId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -516,7 +516,7 @@ const AdminArticleController = {
         const authToken = localStorage.getItem('authToken');
 
         try {
-            const response = await fetch(`/api/admin/articles?articleId=${articleId}`, {
+            const response = await fetch(`/api/admin?type=articles&articleId=${articleId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
@@ -560,7 +560,7 @@ const AdminArticleController = {
         const articleIds = Array.from(this.selectedArticles).join(',');
 
         try {
-            const response = await fetch(`/api/admin/articles?articleIds=${articleIds}`, {
+            const response = await fetch(`/api/admin?type=articles&articleIds=${articleIds}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${authToken}`

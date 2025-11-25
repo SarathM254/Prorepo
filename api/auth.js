@@ -1,11 +1,14 @@
 /**
- * Vercel Serverless Function - Google OAuth Authentication
- * Handles Google OAuth login and user synchronization with JWT tokens
+ * Vercel Serverless Function - Authentication Operations (Consolidated)
+ * Routes auth operations: status and google OAuth
+ * Usage: 
+ *   - /api/auth?action=status (or /api/auth/status for backward compatibility)
+ *   - /api/auth?action=google (or /api/auth/google for backward compatibility)
  */
 
 import { MongoClient } from 'mongodb';
 import { OAuth2Client } from 'google-auth-library';
-import { generateToken } from '../utils/jwt.js';
+import { verifyToken, extractToken, generateToken } from './utils/jwt.js';
 
 // MongoDB connection (cached for serverless)
 let cachedClient = null;
@@ -13,7 +16,13 @@ let cachedDb = null;
 
 async function connectToDatabase() {
   if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
+    try {
+      await cachedClient.db('admin').command({ ping: 1 });
+      return { client: cachedClient, db: cachedDb };
+    } catch (error) {
+      cachedClient = null;
+      cachedDb = null;
+    }
   }
 
   if (!process.env.MONGODB_URI) {
@@ -25,13 +34,15 @@ async function connectToDatabase() {
     useUnifiedTopology: true,
   });
 
-  await client.connect();
-  const db = client.db('campuzway_main');
-
-  cachedClient = client;
-  cachedDb = db;
-
-  return { client, db };
+  try {
+    await client.connect();
+    const db = client.db('campuzway_main');
+    cachedClient = client;
+    cachedDb = db;
+    return { client, db };
+  } catch (error) {
+    throw error;
+  }
 }
 
 // Initialize Google OAuth client
@@ -47,7 +58,97 @@ function getGoogleClient() {
   return new OAuth2Client(clientId, clientSecret, redirectUri);
 }
 
-export default async function handler(req, res) {
+// Handle Auth Status Check
+async function handleStatus(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // Extract and verify JWT token
+  const token = extractToken(req.headers.authorization);
+  
+  if (!token) {
+    return res.status(200).json({
+      authenticated: false
+    });
+  }
+
+  // Verify JWT token
+  const decoded = verifyToken(token);
+  
+  if (!decoded) {
+    return res.status(200).json({
+      authenticated: false
+    });
+  }
+
+  // Look up user in database to get latest info
+  try {
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
+    
+    const user = await usersCollection.findOne({ 
+      email: decoded.email.toLowerCase().trim()
+    });
+    
+    // CRITICAL: If user doesn't exist, they were deleted - invalidate token
+    if (!user) {
+      return res.status(200).json({
+        authenticated: false,
+        error: 'User account no longer exists'
+      });
+    }
+    
+    // Check if this is super admin email and update if needed
+    const isSuperAdminEmail = decoded.email.toLowerCase().trim() === 'motupallisarathchandra@gmail.com';
+    let isSuperAdmin = user.isSuperAdmin || false;
+    
+    // If email matches super admin but DB doesn't have the flag, update it
+    if (isSuperAdminEmail && !user.isSuperAdmin) {
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { $set: { isSuperAdmin: true } }
+      );
+      isSuperAdmin = true;
+    }
+    
+    // Determine if user needs password setup
+    // Only Google OAuth users without password need to set one
+    const authProvider = user.authProvider || 'email';
+    const needsPasswordSetup = !user.password && (authProvider === 'google' || !user.authProvider);
+    
+    return res.status(200).json({
+      authenticated: true,
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        isSuperAdmin: isSuperAdmin,
+        isAdmin: user.isAdmin || false,
+        hasPassword: !!user.password,
+        needsPasswordSetup: needsPasswordSetup,
+        authProvider: authProvider
+      }
+    });
+  } catch (dbError) {
+    // If DB lookup fails, return unauthenticated for safety
+    console.error('Database error in auth status check:', dbError);
+    return res.status(200).json({
+      authenticated: false,
+      error: 'Authentication check failed'
+    });
+  }
+}
+
+// Handle Google OAuth
+async function handleGoogle(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -215,6 +316,40 @@ export default async function handler(req, res) {
       success: false,
       error: error.message || 'Internal server error'
     });
+  }
+}
+
+export default async function handler(req, res) {
+  // Determine action from query parameter or URL path
+  // Support both /api/auth?action=status and /api/auth/status for backward compatibility
+  const urlPath = req.url || '';
+  let action = req.query.action;
+  
+  // If no action in query, check URL path
+  if (!action) {
+    if (urlPath.includes('/status')) {
+      action = 'status';
+    } else if (urlPath.includes('/google')) {
+      action = 'google';
+    }
+  }
+  
+  // Default to status if no action specified
+  if (!action) {
+    action = 'status';
+  }
+
+  // Route based on action
+  switch (action) {
+    case 'status':
+      return await handleStatus(req, res);
+    case 'google':
+      return await handleGoogle(req, res);
+    default:
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid action parameter. Use: status or google'
+      });
   }
 }
 
