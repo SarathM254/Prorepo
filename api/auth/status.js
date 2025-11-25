@@ -101,19 +101,21 @@ export default async function handler(req, res) {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
-          isSuperAdmin: isSuperAdmin
+          isSuperAdmin: isSuperAdmin,
+          hasPassword: !!user.password // Check if user has a password set
         }
       });
     }
   } catch (dbError) {
-    // If DB lookup fails, use token data
+    // If DB lookup fails, use token data (assume no password for safety)
     return res.status(200).json({
       authenticated: true,
       user: {
         id: decoded.id,
         name: decoded.name,
         email: decoded.email,
-        isSuperAdmin: decoded.isSuperAdmin || false
+        isSuperAdmin: decoded.isSuperAdmin || false,
+        hasPassword: false // Default to false if can't verify from DB
       }
     });
   }

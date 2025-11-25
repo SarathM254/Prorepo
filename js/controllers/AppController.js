@@ -40,7 +40,34 @@ const AppController = {
         await this.checkAuthStatus();
         console.log("✅ [AppController] Auth check complete");
 
-        console.log("📰 [AppController] Fetching articles...");
+        // Only load articles if password is set (checkAuthStatus will block if not)
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const data = await response.json();
+                
+                // Only load articles if user has password
+                if (data.authenticated && data.user.hasPassword !== false) {
+                    console.log("📰 [AppController] Fetching articles...");
+                    await this.loadArticles();
+                } else {
+                    console.log("⏸️ [AppController] Password setup required - articles loading blocked");
+                }
+            } catch (error) {
+                console.error('Error checking password status:', error);
+            }
+        }
+    },
+
+    /**
+     * Loads articles and renders them
+     */
+    async loadArticles() {
         const articles = await ArticleModel.fetchArticles();
         
         if (articles === null) {
@@ -87,6 +114,13 @@ const AppController = {
                     localStorage.removeItem('isSuperAdmin');
                 }
                 ProfileView.updateProfileButton(data.user);
+                
+                // Check if user needs to set password (mandatory for Google users)
+                if (data.user.hasPassword === false) {
+                    console.log("User needs to set password - showing password setup modal");
+                    this.showPasswordSetupModal();
+                    return; // Block access to articles until password is set
+                }
             } else {
                 console.log("Not authenticated - redirecting to login");
                 localStorage.removeItem('authToken');
@@ -98,6 +132,187 @@ const AppController = {
             localStorage.removeItem('authToken');
             localStorage.removeItem('isSuperAdmin');
             window.location.href = '/login.html';
+        }
+    },
+
+    /**
+     * Shows the mandatory password setup modal
+     */
+    showPasswordSetupModal() {
+        const modal = document.getElementById('passwordSetupModal');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+        
+        // Hide main content until password is set
+        if (mainContent) {
+            mainContent.style.display = 'none';
+        }
+        
+        // Setup password toggles
+        this.setupPasswordSetupToggles();
+        
+        // Setup form submission
+        const form = document.getElementById('passwordSetupForm');
+        if (form) {
+            form.addEventListener('submit', (e) => this.handlePasswordSetup(e));
+        }
+    },
+
+    /**
+     * Hides the password setup modal and shows main content
+     */
+    hidePasswordSetupModal() {
+        const modal = document.getElementById('passwordSetupModal');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        if (mainContent) {
+            mainContent.style.display = 'block';
+        }
+    },
+
+    /**
+     * Sets up password visibility toggles for password setup form
+     */
+    setupPasswordSetupToggles() {
+        const toggles = [
+            { inputId: 'setupNewPassword', toggleId: 'setupNewPasswordToggle', iconId: 'setupNewPasswordToggleIcon' },
+            { inputId: 'setupConfirmPassword', toggleId: 'setupConfirmPasswordToggle', iconId: 'setupConfirmPasswordToggleIcon' }
+        ];
+
+        toggles.forEach(({ inputId, toggleId, iconId }) => {
+            const passwordInput = document.getElementById(inputId);
+            const toggleBtn = document.getElementById(toggleId);
+            const toggleIcon = document.getElementById(iconId);
+
+            if (passwordInput && toggleBtn && toggleIcon) {
+                // Remove existing listeners by cloning
+                const newToggleBtn = toggleBtn.cloneNode(true);
+                toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+                const newToggleIcon = document.getElementById(iconId);
+                
+                newToggleBtn.addEventListener('click', () => {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    // Toggle icon
+                    if (type === 'text') {
+                        newToggleIcon.classList.remove('fa-eye');
+                        newToggleIcon.classList.add('fa-eye-slash');
+                    } else {
+                        newToggleIcon.classList.remove('fa-eye-slash');
+                        newToggleIcon.classList.add('fa-eye');
+                    }
+                });
+            }
+        });
+    },
+
+    /**
+     * Handles password setup form submission
+     */
+    async handlePasswordSetup(e) {
+        e.preventDefault();
+        
+        const newPassword = document.getElementById('setupNewPassword');
+        const confirmPassword = document.getElementById('setupConfirmPassword');
+        const errorDiv = document.getElementById('passwordSetupError');
+        const submitBtn = document.getElementById('submitPasswordSetupBtn');
+        
+        if (!newPassword || !confirmPassword) {
+            return;
+        }
+        
+        const newPwd = newPassword.value.trim();
+        const confirmPwd = confirmPassword.value.trim();
+        
+        // Hide previous error
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+        }
+        
+        // Validation
+        if (!newPwd) {
+            if (errorDiv) {
+                errorDiv.textContent = 'Password is required';
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+        
+        if (newPwd.length < 6) {
+            if (errorDiv) {
+                errorDiv.textContent = 'Password must be at least 6 characters long';
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+        
+        if (newPwd !== confirmPwd) {
+            if (errorDiv) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+        
+        // Disable submit button
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting Password...';
+        }
+        
+        try {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                throw new Error('No authentication token');
+            }
+            
+            const response = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({
+                    password: newPwd,
+                    currentPassword: undefined // No current password needed for Google users
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to set password');
+            }
+            
+            if (data.success) {
+                // Password set successfully - hide modal and show main content
+                this.hidePasswordSetupModal();
+                
+                // Reload articles
+                await this.loadArticles();
+            } else {
+                throw new Error('Invalid response from server');
+            }
+        } catch (error) {
+            if (errorDiv) {
+                errorDiv.textContent = error.message || 'Failed to set password. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+            
+            // Re-enable submit button
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Set Password & Continue';
+            }
         }
     },
 
