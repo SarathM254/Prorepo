@@ -59,8 +59,8 @@ function configureCloudinary() {
   return false;
 }
 
-// Middleware to check if user is super admin
-async function requireSuperAdmin(req) {
+// Middleware to check if user is admin or super admin
+async function requireAdminAccess(req) {
   const { verifyToken, extractToken } = await import('../utils/jwt.js');
   
   const token = extractToken(req.headers.authorization);
@@ -81,11 +81,12 @@ async function requireSuperAdmin(req) {
       email: decoded.email.toLowerCase() 
     });
     
-    if (!user || !user.isSuperAdmin) {
-      return { authorized: false, error: 'Super admin access required' };
+    // Check if user exists and has admin or super admin access
+    if (!user || (!user.isSuperAdmin && !user.isAdmin)) {
+      return { authorized: false, error: 'Admin access required' };
     }
     
-    return { authorized: true, user };
+    return { authorized: true, user, isSuperAdmin: user.isSuperAdmin || false };
   } catch (error) {
     return { authorized: false, error: 'Database error' };
   }
@@ -120,10 +121,10 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Check super admin access
-  const authCheck = await requireSuperAdmin(req);
+  // Check admin access (super admin or admin)
+  const authCheck = await requireAdminAccess(req);
   if (!authCheck.authorized) {
-    return res.status(authCheck.error === 'Super admin access required' ? 403 : 401).json({
+    return res.status(authCheck.error === 'Admin access required' ? 403 : 401).json({
       success: false,
       error: authCheck.error
     });

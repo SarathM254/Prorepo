@@ -875,10 +875,12 @@
     cursor: not-allowed;
 }
 
-/* Responsive */
+/* Responsive - Mobile First Approach */
 @media (max-width: 1024px) {
     .admin-sidebar {
         transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        will-change: transform;
     }
     
     .admin-sidebar.open {
@@ -891,10 +893,32 @@
     
     .sidebar-toggle {
         display: block;
+        min-width: 44px;
+        min-height: 44px;
     }
     
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    /* Add backdrop overlay for mobile sidebar */
+    .admin-sidebar::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    }
+
+    .admin-sidebar.open::before {
+        opacity: 1;
+        visibility: visible;
     }
 }
 
@@ -903,33 +927,187 @@
         padding: 1rem;
     }
     
+    .admin-top-header {
+        padding: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.25rem;
+    }
+
+    .admin-user-info {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
     .toolbar {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.75rem;
+        padding: 0.75rem;
     }
     
     .toolbar-left {
         flex-direction: column;
+        gap: 0.75rem;
     }
     
-    .search-input {
+    .search-input,
+    .filter-select {
         max-width: 100%;
+        width: 100%;
+        min-height: 44px; /* Better touch target */
     }
     
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1.25rem;
     }
     
     .form-row {
         grid-template-columns: 1fr;
     }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        min-height: 44px; /* Better touch target for mobile keyboards */
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
     
+    /* Make tables horizontally scrollable on mobile */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+
     .admin-table {
         font-size: 0.85rem;
+        min-width: 800px; /* Ensure table doesn't shrink too much */
     }
     
     .admin-table th,
     .admin-table td {
         padding: 0.75rem 0.5rem;
+        white-space: nowrap;
+    }
+
+    .users-table {
+        min-width: 600px;
+    }
+    
+    /* Improve button sizes for touch */
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    .action-btn {
+        min-height: 36px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Improve modal on mobile */
+    .modal-overlay {
+        padding: 1rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+
+    .modal-content {
+        max-height: 85vh;
+        margin-top: 1rem;
+    }
+
+    .modal-header {
+        padding: 1rem;
+        position: sticky;
+        top: 0;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        padding: 1rem;
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+
+    /* Card improvements */
+    .admin-card {
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .card-header h2 {
+        font-size: 1.1rem;
+    }
+
+    /* Prevent body scroll when sidebar is open */
+    body.sidebar-open {
+        overflow: hidden;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .admin-content-wrapper {
+        padding: 0.75rem;
+    }
+
+    .admin-top-header {
+        padding: 0.75rem;
+    }
+
+    .page-title {
+        font-size: 1.1rem;
+    }
+
+    .admin-card {
+        padding: 1rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+
+    .stat-content h3 {
+        font-size: 1.5rem;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .nav-item {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .sidebar-header {
+        padding: 1rem 0.75rem;
     }
 }

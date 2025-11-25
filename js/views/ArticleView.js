@@ -69,6 +69,9 @@ const ArticleView = {
         
         if (!articles || articles.length === 0) {
             console.warn('⚠️ [ArticleView] No articles to render, showing empty state');
+            this.elements.newsGrid.innerHTML = '';
+            this.elements.newsGrid.style.display = 'none';
+            this.elements.featuredStory.style.display = 'none';
             this.renderEmptyState();
             return;
         }

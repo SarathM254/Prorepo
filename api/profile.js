@@ -80,10 +80,12 @@ export default async function handler(req, res) {
       const normalizedEmail = userEmail.toLowerCase().trim();
       const user = await usersCollection.findOne({ email: normalizedEmail });
       
+      // CRITICAL: If user doesn't exist, they were deleted - invalidate session
       if (!user) {
-        return res.status(404).json({
+        return res.status(401).json({
           success: false,
-          error: 'User not found'
+          authenticated: false,
+          error: 'User account no longer exists'
         });
       }
 
@@ -128,10 +130,12 @@ export default async function handler(req, res) {
         // Get current user
         const currentUser = await usersCollection.findOne({ email: userEmail.toLowerCase() });
         
+        // CRITICAL: If user doesn't exist, they were deleted
         if (!currentUser) {
-          return res.status(404).json({
+          return res.status(401).json({
             success: false,
-            error: 'User not found'
+            authenticated: false,
+            error: 'User account no longer exists'
           });
         }
 
@@ -189,10 +193,12 @@ export default async function handler(req, res) {
       // Get current user first
       const currentUser = await usersCollection.findOne({ email: userEmail.toLowerCase() });
       
+      // CRITICAL: If user doesn't exist, they were deleted
       if (!currentUser) {
-        return res.status(404).json({
+        return res.status(401).json({
           success: false,
-          error: 'User not found'
+          authenticated: false,
+          error: 'User account no longer exists'
         });
       }
 

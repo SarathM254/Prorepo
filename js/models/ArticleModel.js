@@ -4,10 +4,12 @@
  */
 const ArticleModel = {
     articles: [],
+    originalArticles: [], // Store original articles for filtering
     cursor: 0,
     articlesPerPage: 5, // Reduced for smoother scrolling experience
     desktopArticlesLimit: 9,
     hasLoopedOnce: false, // Track if we've looped through articles
+    currentFilter: 'all', // Track current filter category
     
     /**
      * Fetches articles from the backend API
@@ -29,6 +31,7 @@ const ArticleModel = {
             
             if (data.success && data.articles) {
                 this.articles = data.articles;
+                this.originalArticles = [...data.articles]; // Store original for filtering
                 console.log('✅ [ArticleModel] Articles stored:', this.articles.length);
                 console.log('🖼️ [ArticleModel] First article sample:', this.articles[0]);
                 return this.articles;
@@ -83,6 +86,28 @@ const ArticleModel = {
      */
     resetLoop() {
         this.hasLoopedOnce = false;
+    },
+
+    /**
+     * Filters articles by category
+     * @param {string} category - Category to filter by ('all' for all articles)
+     * @returns {Array} Filtered articles
+     */
+    filterArticles(category) {
+        this.currentFilter = category || 'all';
+        
+        if (category === 'all' || !category) {
+            this.articles = [...this.originalArticles];
+        } else {
+            this.articles = this.originalArticles.filter(article => article.tag === category);
+        }
+        
+        // Reset cursor when filtering
+        this.cursor = 0;
+        this.hasLoopedOnce = false;
+        
+        console.log(`🔍 [ArticleModel] Filtered by "${category}": ${this.articles.length} articles`);
+        return this.articles;
     },
 
     /**

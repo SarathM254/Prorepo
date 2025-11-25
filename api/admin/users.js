@@ -77,7 +77,7 @@ export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,PUT,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -111,6 +111,7 @@ export default async function handler(req, res) {
         name: user.name,
         email: user.email,
         isSuperAdmin: user.isSuperAdmin || false,
+        isAdmin: user.isAdmin || false,
         created_at: user.created_at
       }));
 
@@ -174,6 +175,52 @@ export default async function handler(req, res) {
       });
     }
 
+    // PUT - Promote/Demote user to admin
+    if (req.method === 'PUT') {
+      const { userId, isAdmin } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'User ID is required'
+        });
+      }
+
+      if (typeof isAdmin !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: 'isAdmin must be a boolean value'
+        });
+      }
+
+      // Prevent demoting super admin
+      const userToUpdate = await usersCollection.findOne({ _id: new ObjectId(userId) });
+      if (userToUpdate && userToUpdate.isSuperAdmin && !isAdmin) {
+        return res.status(403).json({
+          success: false,
+          error: 'Cannot demote super admin user'
+        });
+      }
+
+      const result = await usersCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { isAdmin: isAdmin } }
+      );
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: isAdmin ? 'User promoted to admin successfully' : 'User demoted from admin successfully',
+        isAdmin: isAdmin
+      });
+    }
+
     // DELETE - Delete user(s)
     if (req.method === 'DELETE') {
       const { userId } = req.query;
@@ -189,6 +236,21 @@ export default async function handler(req, res) {
           });
         }
 
+        // Delete user and any related sessions (if sessions collection exists)
+        // Note: Since we're using JWT tokens, we rely on user existence checks
+        // But we'll delete any session data if it exists
+        let sessionsDeleted = 0;
+        try {
+          const sessionsCollection = db.collection('sessions');
+          const sessionResult = await sessionsCollection.deleteMany({ 
+            user_id: userId.toString() 
+          });
+          sessionsDeleted = sessionResult.deletedCount || 0;
+        } catch (sessionError) {
+          // Sessions collection may not exist, which is fine
+          console.log('Sessions collection not found or error:', sessionError.message);
+        }
+
         const result = await usersCollection.deleteOne({ _id: new ObjectId(userId) });
         
         if (result.deletedCount === 0) {
@@ -198,18 +260,35 @@ export default async function handler(req, res) {
           });
         }
 
+        // Log deletion action
+        console.log(`User deleted: ${userToDelete?.email || userId} at ${new Date().toISOString()}`);
+
         return res.status(200).json({
           success: true,
-          message: 'User deleted successfully'
+          message: 'User deleted successfully. All sessions have been invalidated and the user must create a new account.',
+          deletedCount: result.deletedCount,
+          sessionsInvalidated: sessionsDeleted
         });
       } else {
         // Delete all users except super admin
         const result = await usersCollection.deleteMany({ isSuperAdmin: { $ne: true } });
         
+        // Delete all sessions for deleted users
+        let sessionsDeleted = 0;
+        try {
+          const sessionsCollection = db.collection('sessions');
+          // Note: This is a bulk operation - in production, you might want to be more selective
+          const sessionResult = await sessionsCollection.deleteMany({});
+          sessionsDeleted = sessionResult.deletedCount || 0;
+        } catch (sessionError) {
+          console.log('Sessions collection not found or error:', sessionError.message);
+        }
+        
         return res.status(200).json({
           success: true,
-          message: `Deleted ${result.deletedCount} users`,
-          deletedCount: result.deletedCount
+          message: `Deleted ${result.deletedCount} users. All sessions have been invalidated.`,
+          deletedCount: result.deletedCount,
+          sessionsInvalidated: sessionsDeleted
         });
       }
     }
