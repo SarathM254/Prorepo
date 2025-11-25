@@ -89,7 +89,7 @@ export default async function handler(req, res) {
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        error: 'This email is already used'
+        error: 'This email already exists'
       });
     }
 
