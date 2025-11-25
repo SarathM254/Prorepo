@@ -120,14 +120,7 @@ export default async function handler(req, res) {
 
       // Handle password update separately
       if (password) {
-        if (!currentPassword) {
-          return res.status(400).json({
-            success: false,
-            error: 'Current password is required to set a new password'
-          });
-        }
-
-        // Get current user
+        // Get current user first
         const currentUser = await usersCollection.findOne({ email: userEmail.toLowerCase() });
         
         // CRITICAL: If user doesn't exist, they were deleted
@@ -139,8 +132,15 @@ export default async function handler(req, res) {
           });
         }
 
-        // If user has a password, verify current password
+        // If user has a password, require current password verification
         if (currentUser.password) {
+          if (!currentPassword) {
+            return res.status(400).json({
+              success: false,
+              error: 'Current password is required to change your password'
+            });
+          }
+          
           const isValidPassword = await bcrypt.compare(currentPassword, currentUser.password);
           if (!isValidPassword) {
             return res.status(401).json({
@@ -149,6 +149,7 @@ export default async function handler(req, res) {
             });
           }
         }
+        // If user doesn't have a password (Google user setting password for first time), no current password needed
 
         // Validate new password length
         if (password.length < 6) {

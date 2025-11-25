@@ -342,12 +342,21 @@ const AppController = {
                     'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
-                    password: newPwd,
-                    currentPassword: undefined // No current password needed for Google users
+                    password: newPwd
+                    // No currentPassword needed for Google users setting password for first time
                 })
             });
             
-            const data = await response.json();
+            // Check if response is JSON before parsing
+            let data;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned invalid response. Please try again.');
+            }
             
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to set password');
