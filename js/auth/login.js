@@ -19,7 +19,18 @@ async function checkAuthStatus() {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        const data = await response.json();
+        
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            // Response is not JSON - clear token and return
+            localStorage.removeItem('authToken');
+            return;
+        }
         
         if (data.authenticated) {
             window.location.href = '/index.html';
@@ -57,20 +68,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup password toggle
     setupPasswordToggle();
 
-    // Login form submission
+    // Login/Register form submission
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            const formMode = loginForm.getAttribute('data-mode') || 'login';
             
-            if (!email || !password) {
-                showError('Please enter both email and password');
-                return;
+            if (formMode === 'register') {
+                // Registration mode
+                const name = document.getElementById('registerName')?.value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                
+                if (!name || !email || !password) {
+                    showError('Please fill in all fields');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showError('Password must be at least 6 characters long');
+                    return;
+                }
+                
+                await register(name, email, password);
+            } else {
+                // Login mode
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                    showError('Please enter both email and password');
+                    return;
+                }
+                
+                await login(email, password);
             }
-            
-            await login(email, password);
+        });
+    }
+
+    // Sign up button
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
+    if (showRegisterBtn) {
+        showRegisterBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showRegisterForm();
         });
     }
 
@@ -111,7 +153,18 @@ async function login(email, password) {
             body: JSON.stringify({ email, password })
         });
         
-        const data = await response.json();
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            // Response is not JSON - likely an error page
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server error: Invalid response format. Please try again.');
+        }
         
         if (response.ok && data.success) {
             // Store token
@@ -126,7 +179,17 @@ async function login(email, password) {
         }
     } catch (error) {
         console.error('Login error:', error);
-        showError(error.message || 'Failed to login. Please check your credentials.');
+        
+        // Show user-friendly error message
+        let errorMessage = 'Failed to login. Please check your credentials.';
+        
+        if (error.message.includes('Server error')) {
+            errorMessage = 'Server error. Please try again later.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showError(errorMessage);
         loginBtn.disabled = false;
         loading.style.display = 'none';
         loginBtnText.textContent = 'Sign In';
@@ -191,6 +254,151 @@ function setupPasswordToggle() {
                 toggleIcon.classList.add('fa-eye');
             }
         });
+    }
+}
+
+/**
+ * Shows registration form
+ */
+function showRegisterForm() {
+    const loginForm = document.getElementById('loginForm');
+    const emailForm = document.getElementById('emailLoginForm');
+    
+    if (!loginForm || !emailForm) return;
+    
+    // Change form title and button
+    const submitBtn = document.getElementById('loginBtn');
+    const submitBtnText = document.getElementById('loginBtnText');
+    const registerLink = document.querySelector('.register-link');
+    
+    // Update form to registration mode
+    loginForm.setAttribute('data-mode', 'register');
+    submitBtnText.textContent = 'Sign Up';
+    
+    // Add name field if not exists
+    let nameField = document.getElementById('registerName');
+    if (!nameField) {
+        const emailGroup = document.querySelector('.form-group:has(#email)');
+        const nameGroup = document.createElement('div');
+        nameGroup.className = 'form-group';
+        nameGroup.innerHTML = `
+            <label for="registerName">Name</label>
+            <input type="text" id="registerName" name="name" required autocomplete="name" placeholder="Enter your full name">
+        `;
+        loginForm.insertBefore(nameGroup, emailGroup);
+    }
+    
+    // Update link text
+    if (registerLink) {
+        registerLink.innerHTML = 'Already have an account? <a href="#" id="showLoginBtn">Sign in</a>';
+        
+        // Remove old listener and add new one
+        setTimeout(() => {
+            const loginBtn = document.getElementById('showLoginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    hideRegisterForm();
+                });
+            }
+        }, 0);
+    }
+}
+
+/**
+ * Hides registration form and shows login form
+ */
+function hideRegisterForm() {
+    const loginForm = document.getElementById('loginForm');
+    const submitBtnText = document.getElementById('loginBtnText');
+    const registerLink = document.querySelector('.register-link');
+    const nameField = document.getElementById('registerName');
+    
+    if (!loginForm) return;
+    
+    // Update form to login mode
+    loginForm.setAttribute('data-mode', 'login');
+    submitBtnText.textContent = 'Sign In';
+    
+    // Remove name field
+    if (nameField) {
+        nameField.parentElement.remove();
+    }
+    
+    // Update link text
+    if (registerLink) {
+        registerLink.innerHTML = 'Don\'t have an account? <a href="#" id="showRegisterBtn">Sign up</a>';
+        
+        // Add listener back
+        setTimeout(() => {
+            const registerBtn = document.getElementById('showRegisterBtn');
+            if (registerBtn) {
+                registerBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showRegisterForm();
+                });
+            }
+        }, 0);
+    }
+}
+
+/**
+ * Handles user registration
+ */
+async function register(name, email, password) {
+    const loginBtn = document.getElementById('loginBtn');
+    const loading = document.getElementById('loading');
+    const loginBtnText = document.getElementById('loginBtnText');
+    
+    loginBtn.disabled = true;
+    loading.style.display = 'inline-block';
+    loginBtnText.textContent = 'Signing up...';
+    clearErrors();
+    
+    try {
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, password })
+        });
+        
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Server error: Invalid response format. Please try again.');
+        }
+        
+        if (response.ok && data.success) {
+            // Store token
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+            }
+            
+            // Redirect to home
+            window.location.href = '/index.html';
+        } else {
+            throw new Error(data.error || 'Registration failed');
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        
+        let errorMessage = 'Failed to register. Please try again.';
+        if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showError(errorMessage);
+        loginBtn.disabled = false;
+        loading.style.display = 'none';
+        loginBtnText.textContent = 'Sign Up';
     }
 }
 
