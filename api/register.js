@@ -63,172 +63,231 @@ async function connectToDatabase() {
 }
 
 export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      success: false,
-      error: 'Method not allowed' 
-    });
-  }
-
-  // Validate request body exists
-  if (!req.body) {
-    return res.status(400).json({
-      success: false,
-      error: 'Request body is required'
-    });
-  }
-
-  const { name, email, password } = req.body;
-
-  // Validate required fields
-  if (!name || !email || !password) {
-    return res.status(400).json({
-      success: false,
-      error: 'Name, email, and password are required'
-    });
-  }
-
-  // Validate field types
-  if (typeof name !== 'string' || name.trim().length === 0) {
-    return res.status(400).json({
-      success: false,
-      error: 'Name is required'
-    });
-  }
-
-  // Validate email format (basic check)
-  if (typeof email !== 'string' || !email.includes('@')) {
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid email format'
-    });
-  }
-
-  // Validate password type and length
-  if (typeof password !== 'string' || password.length === 0) {
-    return res.status(400).json({
-      success: false,
-      error: 'Password is required'
-    });
-  }
-
-  if (password.length < 6) {
-    return res.status(400).json({
-      success: false,
-      error: 'Password must be at least 6 characters long'
-    });
-  }
-
-  // Validate environment variables
-  if (!process.env.MONGODB_URI) {
-    console.error('MONGODB_URI is not configured');
-    return res.status(500).json({
-      success: false,
-      error: 'Server configuration error. Please contact support.'
-    });
-  }
+  // Track if response has been sent
+  let responseSent = false;
+  
+  // Helper function to send JSON response safely
+  const sendJSON = (status, data) => {
+    if (responseSent) {
+      console.error('Attempted to send response twice:', data);
+      return;
+    }
+    responseSent = true;
+    
+    // Always set Content-Type header
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(status).json(data);
+  };
 
   try {
-    const { db } = await connectToDatabase();
-    const usersCollection = db.collection('users');
+    // Enable CORS
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
+    if (req.method === 'OPTIONS') {
+      return sendJSON(200, { success: true });
+    }
+
+    if (req.method !== 'POST') {
+      return sendJSON(405, { 
+        success: false,
+        error: 'Method not allowed' 
+      });
+    }
+
+    // Validate request body exists
+    if (!req.body) {
+      return sendJSON(400, {
+        success: false,
+        error: 'Request body is required'
+      });
+    }
+
+    const { name, email, password } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      return sendJSON(400, {
+        success: false,
+        error: 'Name, email, and password are required'
+      });
+    }
+
+    // Validate field types
+    if (typeof name !== 'string' || name.trim().length === 0) {
+      return sendJSON(400, {
+        success: false,
+        error: 'Name is required'
+      });
+    }
+
+    // Validate email format (basic check)
+    if (typeof email !== 'string' || !email.includes('@')) {
+      return sendJSON(400, {
         success: false,
         error: 'Invalid email format'
       });
     }
 
-    // Check if email already exists
-    const existingUser = await usersCollection.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
-      return res.status(409).json({
+    // Validate password type and length
+    if (typeof password !== 'string' || password.length === 0) {
+      return sendJSON(400, {
         success: false,
-        error: 'This email already exists'
+        error: 'Password is required'
       });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (password.length < 6) {
+      return sendJSON(400, {
+        success: false,
+        error: 'Password must be at least 6 characters long'
+      });
+    }
 
-    // Create new user with isSuperAdmin field
-    const normalizedEmail = email.toLowerCase().trim();
-    const newUser = {
-      name: name.trim(),
-      email: normalizedEmail,
-      password: hashedPassword,
-      created_at: new Date(),
-      isSuperAdmin: normalizedEmail === 'motupallisarathchandra@gmail.com'
-    };
+    // Validate environment variables
+    if (!process.env.MONGODB_URI) {
+      console.error('MONGODB_URI is not configured');
+      return sendJSON(500, {
+        success: false,
+        error: 'Server configuration error. Please contact support.'
+      });
+    }
 
-    const result = await usersCollection.insertOne(newUser);
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not configured');
+      return sendJSON(500, {
+        success: false,
+        error: 'Server configuration error. Please contact support.'
+      });
+    }
 
-    // Generate JWT token
-    const userResponse = {
-      id: result.insertedId.toString(),
-      name: newUser.name,
-      email: newUser.email,
-      isSuperAdmin: newUser.isSuperAdmin || false
-    };
+    try {
+      const { db } = await connectToDatabase();
+      const usersCollection = db.collection('users');
 
-    const token = generateToken(userResponse);
+      // Validate email format with regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return sendJSON(400, {
+          success: false,
+          error: 'Invalid email format'
+        });
+      }
 
-    res.status(201).json({
-      success: true,
-      user: userResponse,
-      token: token,
-      message: 'Registration successful'
-    });
+      // Check if email already exists
+      const existingUser = await usersCollection.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        return sendJSON(409, {
+          success: false,
+          error: 'This email already exists'
+        });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create new user with isSuperAdmin field
+      const normalizedEmail = email.toLowerCase().trim();
+      const newUser = {
+        name: name.trim(),
+        email: normalizedEmail,
+        password: hashedPassword,
+        created_at: new Date(),
+        isSuperAdmin: normalizedEmail === 'motupallisarathchandra@gmail.com'
+      };
+
+      const result = await usersCollection.insertOne(newUser);
+
+      // Generate JWT token (wrap in try-catch)
+      let token;
+      try {
+        const userResponse = {
+          id: result.insertedId.toString(),
+          name: newUser.name,
+          email: newUser.email,
+          isSuperAdmin: newUser.isSuperAdmin || false
+        };
+        token = generateToken(userResponse);
+      } catch (tokenError) {
+        console.error('JWT token generation failed:', tokenError);
+        return sendJSON(500, {
+          success: false,
+          error: 'Authentication error. Please try again.'
+        });
+      }
+
+      return sendJSON(201, {
+        success: true,
+        user: {
+          id: result.insertedId.toString(),
+          name: newUser.name,
+          email: newUser.email,
+          isSuperAdmin: newUser.isSuperAdmin || false
+        },
+        token: token,
+        message: 'Registration successful'
+      });
+    } catch (dbError) {
+      // Log the full error for debugging (server-side only)
+      console.error('Registration database error:', {
+        message: dbError.message,
+        stack: dbError.stack,
+        name: dbError.name,
+        timestamp: new Date().toISOString(),
+        email: email ? email.toLowerCase() : 'N/A'
+      });
+
+      // Handle specific error types
+      if (dbError.message && dbError.message.includes('MONGODB_URI')) {
+        return sendJSON(500, {
+          success: false,
+          error: 'Database configuration error. Please contact support.'
+        });
+      }
+
+      if (dbError.message && (dbError.message.includes('connect') || dbError.message.includes('Database connection failed'))) {
+        return sendJSON(503, {
+          success: false,
+          error: 'Unable to connect to database. Please try again in a moment.'
+        });
+      }
+
+      // Handle duplicate key errors (MongoDB)
+      if (dbError.code === 11000 || dbError.message.includes('duplicate key')) {
+        return sendJSON(409, {
+          success: false,
+          error: 'This email already exists'
+        });
+      }
+
+      // Generic error - don't expose internal details to users
+      return sendJSON(500, {
+        success: false,
+        error: 'An unexpected error occurred. Please try again.'
+      });
+    }
   } catch (error) {
-    // Log the full error for debugging (server-side only)
-    console.error('Registration error details:', {
+    // Catch-all for any unexpected errors
+    console.error('Registration handler error:', {
       message: error.message,
       stack: error.stack,
       name: error.name,
-      timestamp: new Date().toISOString(),
-      email: email ? email.toLowerCase() : 'N/A'
+      timestamp: new Date().toISOString()
     });
 
-    // Handle specific error types
-    if (error.message && error.message.includes('MONGODB_URI')) {
-      return res.status(500).json({
-        success: false,
-        error: 'Database configuration error. Please contact support.'
-      });
+    // Only send response if not already sent
+    if (!responseSent) {
+      try {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(500).json({
+          success: false,
+          error: 'An unexpected error occurred. Please try again.'
+        });
+      } catch (sendError) {
+        console.error('Failed to send error response:', sendError);
+      }
     }
-
-    if (error.message && (error.message.includes('connect') || error.message.includes('Database connection failed'))) {
-      return res.status(503).json({
-        success: false,
-        error: 'Unable to connect to database. Please try again in a moment.'
-      });
-    }
-
-    // Handle duplicate key errors (MongoDB)
-    if (error.code === 11000 || error.message.includes('duplicate key')) {
-      return res.status(409).json({
-        success: false,
-        error: 'This email already exists'
-      });
-    }
-
-    // Generic error - don't expose internal details to users
-    return res.status(500).json({
-      success: false,
-      error: 'An unexpected error occurred. Please try again.'
-    });
   }
 }

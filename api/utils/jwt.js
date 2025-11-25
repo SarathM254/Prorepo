@@ -14,6 +14,12 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
  * @returns {string} JWT token
  */
 export function generateToken(user) {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  
+  if (!JWT_SECRET || JWT_SECRET === 'your-secret-key-change-in-production') {
+    throw new Error('JWT_SECRET is not properly configured');
+  }
+  
   const payload = {
     id: user.id || user._id?.toString(),
     email: user.email,
@@ -21,9 +27,13 @@ export function generateToken(user) {
     isSuperAdmin: user.isSuperAdmin || false
   };
 
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN
-  });
+  try {
+    return jwt.sign(payload, JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    });
+  } catch (error) {
+    throw new Error(`JWT token generation failed: ${error.message}`);
+  }
 }
 
 /**

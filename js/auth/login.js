@@ -157,12 +157,24 @@ async function login(email, password) {
         const contentType = response.headers.get('content-type');
         let data;
         
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            // Response is not JSON - likely an error page
-            const text = await response.text();
-            console.error('Non-JSON response:', text);
+        try {
+            if (contentType && contentType.includes('application/json')) {
+                const text = await response.text();
+                data = JSON.parse(text);
+            } else {
+                // Response is not JSON - likely an error page
+                const text = await response.text();
+                console.error('Non-JSON response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    contentType: contentType,
+                    preview: text.substring(0, 200)
+                });
+                throw new Error('Server error: Invalid response format. Please try again.');
+            }
+        } catch (parseError) {
+            // If JSON parsing fails or response is not JSON
+            console.error('Response parsing error:', parseError);
             throw new Error('Server error: Invalid response format. Please try again.');
         }
         
@@ -385,11 +397,24 @@ async function register(name, email, password) {
         const contentType = response.headers.get('content-type');
         let data;
         
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            const text = await response.text();
-            console.error('Non-JSON response:', text);
+        try {
+            if (contentType && contentType.includes('application/json')) {
+                const text = await response.text();
+                data = JSON.parse(text);
+            } else {
+                // Response is not JSON - likely an error page
+                const text = await response.text();
+                console.error('Non-JSON response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    contentType: contentType,
+                    preview: text.substring(0, 200)
+                });
+                throw new Error('Server error: Invalid response format. Please try again.');
+            }
+        } catch (parseError) {
+            // If JSON parsing fails or response is not JSON
+            console.error('Response parsing error:', parseError);
             throw new Error('Server error: Invalid response format. Please try again.');
         }
         
