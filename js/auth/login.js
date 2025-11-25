@@ -73,7 +73,25 @@ async function login(email, password) {
             body: JSON.stringify({ email, password })
         });
 
-        const data = await response.json();
+        // Check if response is JSON before parsing
+        let data;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('JSON parsing error:', jsonError);
+                const text = await response.text();
+                console.error('Response text:', text);
+                throw new Error('Invalid response from server. Please try again.');
+            }
+        } else {
+            // Non-JSON response - likely an error page
+            const text = await response.text();
+            console.error('Non-JSON response:', text.substring(0, 200));
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
 
         if (response.ok) {
             // Store auth token in localStorage
@@ -89,12 +107,17 @@ async function login(email, password) {
             } else if (response.status === 400 && data.requiresGoogleLogin) {
                 showError(data.error || 'Please use Google login or set a password', 'password');
             } else {
-                showError(data.error || 'Login failed');
+                showError(data.error || data.message || 'Login failed. Please try again.');
             }
         }
     } catch (error) {
         console.error('Login error:', error);
-        showError('Network error. Please try again.');
+        // Show more specific error message
+        if (error.message) {
+            showError(error.message);
+        } else {
+            showError('Network error. Please check your connection and try again.');
+        }
     } finally {
         loginBtn.disabled = false;
         loading.style.display = 'none';
@@ -125,7 +148,25 @@ async function register(name, email, password) {
             body: JSON.stringify({ name, email, password })
         });
 
-        const data = await response.json();
+        // Check if response is JSON before parsing
+        let data;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('JSON parsing error:', jsonError);
+                const text = await response.text();
+                console.error('Response text:', text);
+                throw new Error('Invalid response from server. Please try again.');
+            }
+        } else {
+            // Non-JSON response - likely an error page
+            const text = await response.text();
+            console.error('Non-JSON response:', text.substring(0, 200));
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
 
         if (response.ok) {
             // Store auth token in localStorage
@@ -150,12 +191,17 @@ async function register(name, email, password) {
             if (response.status === 409) {
                 showError(data.error || 'This email is already used', 'regEmail');
             } else {
-                showError(data.error || 'Registration failed', 'regEmail');
+                showError(data.error || data.message || 'Registration failed. Please try again.', 'regEmail');
             }
         }
     } catch (error) {
         console.error('Registration error:', error);
-        showError('Network error. Please try again.');
+        // Show more specific error message
+        if (error.message) {
+            showError(error.message);
+        } else {
+            showError('Network error. Please check your connection and try again.');
+        }
     } finally {
         registerBtn.disabled = false;
         loading.style.display = 'none';
