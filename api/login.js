@@ -5,7 +5,7 @@
 
 import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
-import { generateToken } from '../utils/jwt.js';
+import { generateToken } from './utils/jwt.js';
 
 // MongoDB connection (cached for serverless)
 let cachedClient = null;
