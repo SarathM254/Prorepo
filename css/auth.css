@@ -205,6 +205,17 @@ body {
     color: white;
 }
 
+.google-login-section {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.login-description {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
 .google-btn {
     width: 100%;
     padding: 1rem;
@@ -219,7 +230,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1rem;
+    margin: 0 auto;
 }
 
 .google-btn:hover {
@@ -261,6 +272,16 @@ body {
     border-radius: 10px;
     margin-bottom: 1rem;
     display: none;
+}
+
+.error-message {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    display: none;
+    border: 1px solid #fca5a5;
 }
 
 .demo-credentials {

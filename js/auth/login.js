@@ -1,6 +1,6 @@
 /**
  * Login Page JavaScript
- * Handles login and registration functionality
+ * Handles Google OAuth login only
  */
 
 /**
@@ -48,283 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (error) {
         showError(decodeURIComponent(error));
     }
+
+    // Google login button
+    const googleBtn = document.getElementById('googleLoginBtn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', handleGoogleLogin);
+    }
 });
-
-/**
- * Handles user login
- * @param {string} email - User email
- * @param {string} password - User password
- */
-async function login(email, password) {
-    const loginBtn = document.getElementById('loginBtn');
-    const loading = document.getElementById('loading');
-    
-    loginBtn.disabled = true;
-    loading.style.display = 'block';
-    clearErrors();
-
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ email, password })
-        });
-
-        // Check if response is JSON before parsing
-        let data;
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('application/json')) {
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('JSON parsing error:', jsonError);
-                const text = await response.text();
-                console.error('Response text:', text);
-                throw new Error('Invalid response from server. Please try again.');
-            }
-        } else {
-            // Non-JSON response - likely an error page
-            const text = await response.text();
-            console.error('Non-JSON response:', text.substring(0, 200));
-            throw new Error(`Server error (${response.status}). Please try again.`);
-        }
-
-        if (response.ok) {
-            // Store auth token in localStorage
-            if (data.token) {
-                localStorage.setItem('authToken', data.token);
-            }
-            window.location.href = '/index.html';
-        } else {
-            if (response.status === 404) {
-                showError(data.error || 'Invalid email. Try sign in instead', 'email');
-            } else if (response.status === 401) {
-                showError(data.error || 'Invalid password', 'password');
-            } else if (response.status === 400 && data.requiresGoogleLogin) {
-                showError(data.error || 'Please use Google login or set a password', 'password');
-            } else {
-                showError(data.error || data.message || 'Login failed. Please try again.');
-            }
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-        // Show more specific error message
-        if (error.message) {
-            showError(error.message);
-        } else {
-            showError('Network error. Please check your connection and try again.');
-        }
-    } finally {
-        loginBtn.disabled = false;
-        loading.style.display = 'none';
-    }
-}
-
-/**
- * Handles user registration
- * @param {string} name - User name
- * @param {string} email - User email
- * @param {string} password - User password
- */
-async function register(name, email, password) {
-    const registerBtn = document.getElementById('registerSubmitBtn');
-    const loading = document.getElementById('regLoading');
-    
-    registerBtn.disabled = true;
-    loading.style.display = 'block';
-    clearErrors();
-
-    try {
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ name, email, password })
-        });
-
-        // Check if response is JSON before parsing
-        let data;
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('application/json')) {
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('JSON parsing error:', jsonError);
-                const text = await response.text();
-                console.error('Response text:', text);
-                throw new Error('Invalid response from server. Please try again.');
-            }
-        } else {
-            // Non-JSON response - likely an error page
-            const text = await response.text();
-            console.error('Non-JSON response:', text.substring(0, 200));
-            throw new Error(`Server error (${response.status}). Please try again.`);
-        }
-
-        if (response.ok) {
-            // Store auth token in localStorage
-            if (data.token) {
-                localStorage.setItem('authToken', data.token);
-            }
-            
-            document.querySelector('.login-container').innerHTML = `
-                <div class="logo">
-                    <h1>Proto</h1>
-                    <p>Account Created Successfully!</p>
-                </div>
-                <div class="success-message" style="display: block;">
-                    <i class="fas fa-check-circle"></i> Welcome to Proto! Redirecting...
-                </div>
-            `;
-            
-            setTimeout(() => {
-                window.location.href = '/index.html';
-            }, 2000);
-        } else {
-            if (response.status === 409) {
-                showError(data.error || 'This email is already used', 'regEmail');
-            } else {
-                showError(data.error || data.message || 'Registration failed. Please try again.', 'regEmail');
-            }
-        }
-    } catch (error) {
-        console.error('Registration error:', error);
-        // Show more specific error message
-        if (error.message) {
-            showError(error.message);
-        } else {
-            showError('Network error. Please check your connection and try again.');
-        }
-    } finally {
-        registerBtn.disabled = false;
-        loading.style.display = 'none';
-    }
-}
-
-/**
- * Shows the registration form
- */
-function showRegisterForm() {
-    const container = document.querySelector('.login-container');
-    container.innerHTML = `
-        <div class="logo">
-            <h1>Proto</h1>
-            <p>Create Your Account</p>
-        </div>
-
-        <form id="registerForm">
-            <div class="form-group">
-                <label for="regName">Full Name</label>
-                <input type="text" id="regName" name="name" required>
-                <div class="error-message" id="regNameError"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="regEmail">Email</label>
-                <input type="email" id="regEmail" name="email" required>
-                <div class="error-message" id="regEmailError"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="regPassword">Password</label>
-                <div class="password-input-wrapper">
-                    <input type="password" id="regPassword" name="password" required>
-                    <button type="button" class="password-toggle" id="regPasswordToggle" aria-label="Toggle password visibility">
-                        <i class="fas fa-eye" id="regPasswordToggleIcon"></i>
-                    </button>
-                </div>
-                <div class="error-message" id="regPasswordError"></div>
-            </div>
-
-            <button type="submit" class="login-btn" id="registerSubmitBtn">
-                <i class="fas fa-user-plus"></i> Create Account
-            </button>
-
-            <div class="loading" id="regLoading">
-                <div class="spinner"></div>
-                <p>Creating account...</p>
-            </div>
-        </form>
-
-        <div class="divider">
-            <span>or</span>
-        </div>
-
-        <button class="register-btn" id="backToLoginBtn">
-            <i class="fas fa-arrow-left"></i> Back to Login
-        </button>
-    `;
-
-    // Setup password toggle for register form
-    setupPasswordToggle('regPassword', 'regPasswordToggle', 'regPasswordToggleIcon');
-
-    // Add event listeners for register form
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('regName').value;
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        
-        if (!name || !email || !password) {
-            showError('Please fill in all fields');
-            return;
-        }
-
-        await register(name, email, password);
-    });
-
-    document.getElementById('backToLoginBtn').addEventListener('click', () => {
-        location.reload();
-    });
-}
-
-/**
- * Shows an error message
- * @param {string} message - Error message
- * @param {string} fieldId - Field ID to highlight (optional)
- */
-function showError(message, fieldId = null) {
-    const generalErrorDiv = document.createElement('div');
-    generalErrorDiv.className = 'error-message-general';
-    generalErrorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-    
-    const form = document.querySelector('form');
-    form.insertBefore(generalErrorDiv, form.firstChild);
-    
-    if (fieldId) {
-        const errorField = document.getElementById(`${fieldId}Error`);
-        const inputField = document.getElementById(fieldId);
-        if (errorField && inputField) {
-            errorField.textContent = message;
-            errorField.style.display = 'block';
-            inputField.classList.add('error');
-        }
-    }
-    
-    setTimeout(() => {
-        generalErrorDiv.remove();
-    }, 5000);
-}
-
-/**
- * Clears all error messages
- */
-function clearErrors() {
-    document.querySelectorAll('.error-message-general').forEach(e => e.remove());
-    document.querySelectorAll('.error-message').forEach(e => {
-        e.textContent = '';
-        e.style.display = 'none';
-    });
-    document.querySelectorAll('input.error').forEach(e => e.classList.remove('error'));
-}
 
 /**
  * Handles Google OAuth login - redirects to Google
@@ -335,65 +65,33 @@ function handleGoogleLogin() {
 }
 
 /**
- * Toggle password visibility
+ * Shows an error message
+ * @param {string} message - Error message
  */
-function setupPasswordToggle(inputId, toggleId, iconId) {
-    const passwordInput = document.getElementById(inputId);
-    const toggleBtn = document.getElementById(toggleId);
-    const toggleIcon = document.getElementById(iconId);
-
-    if (passwordInput && toggleBtn && toggleIcon) {
-        toggleBtn.addEventListener('click', () => {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Toggle icon
-            if (type === 'text') {
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
-            }
-        });
+function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    } else {
+        // Fallback: create error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message-general';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        errorDiv.style.cssText = 'display: block; background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin: 1rem 0;';
+        
+        const container = document.querySelector('.login-container');
+        if (container) {
+            container.insertBefore(errorDiv, container.firstChild);
+        }
+        
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
     }
 }
-
-// Initialize login page
-document.addEventListener('DOMContentLoaded', () => {
-    // Setup password toggles
-    setupPasswordToggle('password', 'passwordToggle', 'passwordToggleIcon');
-
-    // Login form submission
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showError('Please fill in all fields');
-                return;
-            }
-
-            await login(email, password);
-        });
-    }
-
-    // Google login button
-    const googleBtn = document.getElementById('googleLoginBtn');
-    if (googleBtn) {
-        googleBtn.addEventListener('click', handleGoogleLogin);
-    }
-
-    // Register button click
-    const registerBtn = document.getElementById('registerBtn');
-    if (registerBtn) {
-        registerBtn.addEventListener('click', () => {
-            showRegisterForm();
-        });
-    }
-});
 
