@@ -95,6 +95,7 @@ export default async function handler(req, res) {
 
           if (user) {
             // User exists - update Google OAuth info if needed
+            // CRITICAL: Preserve existing password field
             const updateData = {
               googleId: googleId,
               googlePicture: googlePicture,
@@ -106,13 +107,28 @@ export default async function handler(req, res) {
               updateData.name = googleName;
             }
 
+            // Set authProvider if not already set
+            if (!user.authProvider) {
+              updateData.authProvider = 'google';
+            }
+
+            // Log password status for debugging
+            console.log(`Google login: User ${user.email} exists. Password status: ${user.password ? 'EXISTS' : 'MISSING'}`);
+
             await usersCollection.updateOne(
               { _id: user._id },
               { $set: updateData }
+              // NOTE: We're only updating the fields in updateData
+              // Password field is NOT in updateData, so it will be preserved automatically
             );
 
             // Refresh user data
             user = await usersCollection.findOne({ _id: user._id });
+            
+            // Verify password is still there
+            if (user.password) {
+              console.log(`Google login: Password preserved for ${user.email}`);
+            }
           } else {
             // New user - create account
             const isSuperAdminEmail = googleEmail === 'motupallisarathchandra@gmail.com';

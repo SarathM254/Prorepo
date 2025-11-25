@@ -62,6 +62,11 @@
     <!-- Password Setup Modal (for Google users) -->
     <div class="password-setup-modal" id="passwordSetupModal" style="display: none;">
         <div class="password-setup-content">
+            <!-- Add Info Icon Button -->
+            <button class="password-setup-info-btn" id="passwordSetupInfoBtn" aria-label="Why do I need to set a password?">
+                <i class="fas fa-info-circle"></i>
+            </button>
+            
             <div class="password-setup-header">
                 <h2><i class="fas fa-lock"></i> Set Your Password</h2>
                 <p>To continue, please set a password for your account</p>
@@ -92,6 +97,23 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Info Tooltip for Password Setup -->
+    <div class="password-setup-info-tooltip" id="passwordSetupInfoTooltip" style="display: none;">
+        <div class="info-tooltip-content">
+            <button class="close-info-tooltip" id="closeInfoTooltip" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3><i class="fas fa-info-circle"></i> Why Set a Password?</h3>
+            <p>You logged in using Google. Setting a password allows you to:</p>
+            <ul>
+                <li>Log in with your email and password in the future</li>
+                <li>Access your account even if Google login is unavailable</li>
+                <li>Have an additional layer of account security</li>
+            </ul>
+            <p><strong>This is a one-time setup.</strong> You can still use Google login after setting a password.</p>
         </div>
     </div>
 

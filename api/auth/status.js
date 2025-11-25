@@ -102,17 +102,24 @@ export default async function handler(req, res) {
       isSuperAdmin = true;
     }
     
-      return res.status(200).json({
-        authenticated: true,
-        user: {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          isSuperAdmin: isSuperAdmin,
-          isAdmin: user.isAdmin || false,
-          hasPassword: !!user.password // Check if user has a password set
-        }
-      });
+    // Determine if user needs password setup
+    // Only Google OAuth users without password need to set one
+    const authProvider = user.authProvider || 'email';
+    const needsPasswordSetup = !user.password && (authProvider === 'google' || !user.authProvider);
+    
+    return res.status(200).json({
+      authenticated: true,
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        isSuperAdmin: isSuperAdmin,
+        isAdmin: user.isAdmin || false,
+        hasPassword: !!user.password, // Check if user has a password set
+        needsPasswordSetup: needsPasswordSetup, // New field - only true for Google users without password
+        authProvider: authProvider // New field - 'google' or 'email'
+      }
+    });
   } catch (dbError) {
     // If DB lookup fails, return unauthenticated for safety
     console.error('Database error in auth status check:', dbError);

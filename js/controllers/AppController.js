@@ -115,11 +115,20 @@ const AppController = {
                 }
                 ProfileView.updateProfileButton(data.user);
                 
-                // Check if user needs to set password (mandatory for Google users)
-                if (data.user.hasPassword === false) {
+                // Check if user needs to set password (ONLY for Google users without password)
+                // Use needsPasswordSetup flag if available, fallback to hasPassword check
+                const needsPassword = data.user.needsPasswordSetup !== undefined 
+                    ? data.user.needsPasswordSetup 
+                    : (data.user.hasPassword === false && data.user.authProvider === 'google');
+                
+                if (needsPassword) {
                     console.log("User needs to set password - showing password setup modal");
+                    console.log("User auth provider:", data.user.authProvider, "Has password:", data.user.hasPassword);
                     this.showPasswordSetupModal();
                     return; // Block access to articles until password is set
+                } else {
+                    // User has password or is not a Google user - proceed normally
+                    console.log("User has password - proceeding normally");
                 }
             } else {
                 // User not authenticated - could be deleted account
@@ -166,6 +175,49 @@ const AppController = {
         const form = document.getElementById('passwordSetupForm');
         if (form) {
             form.addEventListener('submit', (e) => this.handlePasswordSetup(e));
+        }
+        
+        // Setup info button
+        this.setupPasswordSetupInfoButton();
+    },
+
+    /**
+     * Sets up info button for password setup modal
+     */
+    setupPasswordSetupInfoButton() {
+        const infoBtn = document.getElementById('passwordSetupInfoBtn');
+        const infoTooltip = document.getElementById('passwordSetupInfoTooltip');
+        const closeInfoBtn = document.getElementById('closeInfoTooltip');
+        
+        if (infoBtn && infoTooltip) {
+            // Remove existing listeners by cloning
+            const newInfoBtn = infoBtn.cloneNode(true);
+            infoBtn.parentNode.replaceChild(newInfoBtn, infoBtn);
+            
+            // Show tooltip when info button clicked
+            newInfoBtn.addEventListener('click', () => {
+                infoTooltip.style.display = 'flex';
+            });
+        }
+        
+        if (closeInfoBtn && infoTooltip) {
+            // Remove existing listeners by cloning
+            const newCloseBtn = closeInfoBtn.cloneNode(true);
+            closeInfoBtn.parentNode.replaceChild(newCloseBtn, closeInfoBtn);
+            
+            // Close tooltip when close button clicked
+            newCloseBtn.addEventListener('click', () => {
+                infoTooltip.style.display = 'none';
+            });
+        }
+        
+        // Close tooltip when clicking outside
+        if (infoTooltip) {
+            infoTooltip.addEventListener('click', (e) => {
+                if (e.target === infoTooltip) {
+                    infoTooltip.style.display = 'none';
+                }
+            });
         }
     },
 
