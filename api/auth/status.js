@@ -1,9 +1,11 @@
 /**
  * Vercel Serverless Function - Auth Status
  * Check if user is authenticated and get user info including super admin status
+ * Uses JWT token verification
  */
 
 import { MongoClient } from 'mongodb';
+import { verifyToken, extractToken } from '../utils/jwt.js';
 
 // MongoDB connection (cached for serverless)
 let cachedClient = null;
@@ -52,79 +54,68 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Check for auth token in Authorization header
-  const authHeader = req.headers.authorization;
+  // Extract and verify JWT token
+  const token = extractToken(req.headers.authorization);
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(200).json({
       authenticated: false
     });
   }
 
-  // Extract user info from token
+  // Verify JWT token
+  const decoded = verifyToken(token);
+  
+  if (!decoded) {
+    return res.status(200).json({
+      authenticated: false
+    });
+  }
+
+  // Look up user in database to get latest info
   try {
-    const token = authHeader.substring(7); // Remove "Bearer "
-    const [email] = token.split(':');
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
     
-    if (!email) {
-      return res.status(200).json({
-        authenticated: false
-      });
-    }
-
-    // Look up user in database to get isSuperAdmin status
-    try {
-      const { db } = await connectToDatabase();
-      const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne({ 
+      email: decoded.email.toLowerCase().trim()
+    });
+    
+    if (user) {
+      // Check if this is super admin email and update if needed
+      const isSuperAdminEmail = decoded.email.toLowerCase().trim() === 'motupallisarathchandra@gmail.com';
+      let isSuperAdmin = user.isSuperAdmin || false;
       
-      const normalizedEmail = decodeURIComponent(email).toLowerCase().trim();
-      const user = await usersCollection.findOne({ 
-        email: normalizedEmail
-      });
-      
-      if (user) {
-        // Check if this is super admin email and update if needed
-        const isSuperAdminEmail = normalizedEmail === 'motupallisarathchandra@gmail.com';
-        let isSuperAdmin = user.isSuperAdmin || false;
-        
-        // If email matches super admin but DB doesn't have the flag, update it
-        if (isSuperAdminEmail && !user.isSuperAdmin) {
-          await usersCollection.updateOne(
-            { _id: user._id },
-            { $set: { isSuperAdmin: true } }
-          );
-          isSuperAdmin = true;
-        }
-        
-        return res.status(200).json({
-          authenticated: true,
-          user: {
-            id: user._id.toString(),
-            name: user.name,
-            email: user.email,
-            isSuperAdmin: isSuperAdmin
-          }
-        });
+      // If email matches super admin but DB doesn't have the flag, update it
+      if (isSuperAdminEmail && !user.isSuperAdmin) {
+        await usersCollection.updateOne(
+          { _id: user._id },
+          { $set: { isSuperAdmin: true } }
+        );
+        isSuperAdmin = true;
       }
-    } catch (dbError) {
-      // Fall through to return authenticated: false
-    }
-
-    // Fallback: if database lookup fails, use token info
-    const [decodedEmail, decodedName] = token.split(':').map(s => decodeURIComponent(s));
-    if (decodedEmail && decodedName) {
+      
       return res.status(200).json({
         authenticated: true,
         user: {
-          id: 1,
-          name: decodedName,
-          email: decodedEmail,
-          isSuperAdmin: false // Default to false if can't verify from DB
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          isSuperAdmin: isSuperAdmin
         }
       });
     }
-  } catch (error) {
-    // Silent fail
+  } catch (dbError) {
+    // If DB lookup fails, use token data
+    return res.status(200).json({
+      authenticated: true,
+      user: {
+        id: decoded.id,
+        name: decoded.name,
+        email: decoded.email,
+        isSuperAdmin: decoded.isSuperAdmin || false
+      }
+    });
   }
 
   res.status(200).json({

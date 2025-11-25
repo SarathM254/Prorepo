@@ -1,9 +1,11 @@
 /**
  * Vercel Serverless Function - Profile
- * Uses MongoDB Atlas for user profile management
+ * Uses MongoDB Atlas for user profile management with JWT tokens
  */
 
 import { MongoClient } from 'mongodb';
+import bcrypt from 'bcryptjs';
+import { verifyToken, extractToken } from '../utils/jwt.js';
 
 // MongoDB connection (cached for serverless)
 let cachedClient = null;
@@ -36,19 +38,15 @@ async function connectToDatabase() {
   }
 }
 
-// Helper to get user from token
+// Helper to get user from JWT token
 function getUserFromToken(authHeader) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = extractToken(authHeader);
+  if (!token) {
     return null;
   }
   
-  try {
-    const token = authHeader.substring(7); // Remove "Bearer "
-    const [email] = token.split(':');
-    return email ? decodeURIComponent(email) : null;
-  } catch (error) {
-    return null;
-  }
+  const decoded = verifyToken(token);
+  return decoded ? decoded.email : null;
 }
 
 export default async function handler(req, res) {
@@ -116,8 +114,71 @@ export default async function handler(req, res) {
 
     // PUT - Update user profile
     if (req.method === 'PUT') {
-      const { name, email } = req.body;
+      const { name, email, password, currentPassword } = req.body;
 
+      // Handle password update separately
+      if (password) {
+        if (!currentPassword) {
+          return res.status(400).json({
+            success: false,
+            error: 'Current password is required to set a new password'
+          });
+        }
+
+        // Get current user
+        const currentUser = await usersCollection.findOne({ email: userEmail.toLowerCase() });
+        
+        if (!currentUser) {
+          return res.status(404).json({
+            success: false,
+            error: 'User not found'
+          });
+        }
+
+        // If user has a password, verify current password
+        if (currentUser.password) {
+          const isValidPassword = await bcrypt.compare(currentPassword, currentUser.password);
+          if (!isValidPassword) {
+            return res.status(401).json({
+              success: false,
+              error: 'Current password is incorrect'
+            });
+          }
+        }
+
+        // Validate new password length
+        if (password.length < 6) {
+          return res.status(400).json({
+            success: false,
+            error: 'Password must be at least 6 characters long'
+          });
+        }
+
+        // Hash and update password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await usersCollection.updateOne(
+          { email: userEmail.toLowerCase() },
+          { $set: { password: hashedPassword } }
+        );
+
+        // Fetch updated user
+        const updatedUser = await usersCollection.findOne({ email: userEmail.toLowerCase() });
+        const isSuperAdminEmail = updatedUser.email.toLowerCase().trim() === 'motupallisarathchandra@gmail.com';
+        const isSuperAdmin = updatedUser.isSuperAdmin || isSuperAdminEmail;
+
+        return res.status(200).json({
+          success: true,
+          user: {
+            id: updatedUser._id.toString(),
+            name: updatedUser.name,
+            email: updatedUser.email,
+            isSuperAdmin: isSuperAdmin
+          },
+          message: 'Password updated successfully'
+        });
+      }
+
+      // Handle name/email update
       if (!name || !email) {
         return res.status(400).json({
           success: false,

@@ -1,10 +1,11 @@
 /**
  * Vercel Serverless Function - Register
- * Uses MongoDB Atlas for user storage
+ * Uses MongoDB Atlas for user storage with JWT tokens
  */
 
 import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
+import { generateToken } from '../utils/jwt.js';
 
 // MongoDB connection (cached for serverless)
 let cachedClient = null;
@@ -107,15 +108,15 @@ export default async function handler(req, res) {
 
     const result = await usersCollection.insertOne(newUser);
 
-    // Create auth token
-    const token = `${encodeURIComponent(newUser.email)}:${encodeURIComponent(newUser.name)}`;
-
+    // Generate JWT token
     const userResponse = {
       id: result.insertedId.toString(),
       name: newUser.name,
       email: newUser.email,
       isSuperAdmin: newUser.isSuperAdmin || false
     };
+
+    const token = generateToken(userResponse);
 
     res.status(201).json({
       success: true,

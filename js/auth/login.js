@@ -86,6 +86,8 @@ async function login(email, password) {
                 showError(data.error || 'Invalid email. Try sign in instead', 'email');
             } else if (response.status === 401) {
                 showError(data.error || 'Invalid password', 'password');
+            } else if (response.status === 400 && data.requiresGoogleLogin) {
+                showError(data.error || 'Please use Google login or set a password', 'password');
             } else {
                 showError(data.error || 'Login failed');
             }
@@ -186,7 +188,12 @@ function showRegisterForm() {
 
             <div class="form-group">
                 <label for="regPassword">Password</label>
-                <input type="password" id="regPassword" name="password" required>
+                <div class="password-input-wrapper">
+                    <input type="password" id="regPassword" name="password" required>
+                    <button type="button" class="password-toggle" id="regPasswordToggle" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="regPasswordToggleIcon"></i>
+                    </button>
+                </div>
                 <div class="error-message" id="regPasswordError"></div>
             </div>
 
@@ -208,6 +215,9 @@ function showRegisterForm() {
             <i class="fas fa-arrow-left"></i> Back to Login
         </button>
     `;
+
+    // Setup password toggle for register form
+    setupPasswordToggle('regPassword', 'regPasswordToggle', 'regPasswordToggleIcon');
 
     // Add event listeners for register form
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -278,8 +288,36 @@ function handleGoogleLogin() {
     window.location.href = '/api/auth/google';
 }
 
+/**
+ * Toggle password visibility
+ */
+function setupPasswordToggle(inputId, toggleId, iconId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleBtn = document.getElementById(toggleId);
+    const toggleIcon = document.getElementById(iconId);
+
+    if (passwordInput && toggleBtn && toggleIcon) {
+        toggleBtn.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle icon
+            if (type === 'text') {
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+    }
+}
+
 // Initialize login page
 document.addEventListener('DOMContentLoaded', () => {
+    // Setup password toggles
+    setupPasswordToggle('password', 'passwordToggle', 'passwordToggleIcon');
+
     // Login form submission
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {

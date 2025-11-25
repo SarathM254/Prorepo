@@ -1,10 +1,11 @@
 /**
  * Vercel Serverless Function - Google OAuth Authentication
- * Handles Google OAuth login and user synchronization
+ * Handles Google OAuth login and user synchronization with JWT tokens
  */
 
 import { MongoClient } from 'mongodb';
 import { OAuth2Client } from 'google-auth-library';
+import { generateToken } from '../utils/jwt.js';
 
 // MongoDB connection (cached for serverless)
 let cachedClient = null;
@@ -143,8 +144,15 @@ export default async function handler(req, res) {
             isSuperAdmin = true;
           }
 
-          // Create auth token (same format as regular login)
-          const token = `${encodeURIComponent(user.email)}:${encodeURIComponent(user.name)}`;
+          // Generate JWT token
+          const userResponse = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            isSuperAdmin: isSuperAdmin
+          };
+
+          const token = generateToken(userResponse);
 
           // Redirect to frontend with token
           const frontendUrl = process.env.FRONTEND_URL || 'https://proto-social.vercel.app';

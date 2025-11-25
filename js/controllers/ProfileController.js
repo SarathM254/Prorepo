@@ -66,6 +66,27 @@ const ProfileController = {
                 window.location.href = '/admin.html';
             });
         }
+
+        // Set password button
+        const setPasswordBtn = document.getElementById('setPasswordBtn');
+        if (setPasswordBtn) {
+            setPasswordBtn.addEventListener('click', () => this.showPasswordSection());
+        }
+
+        // Save password button
+        const savePasswordBtn = document.getElementById('savePasswordBtn');
+        if (savePasswordBtn) {
+            savePasswordBtn.addEventListener('click', () => this.savePassword());
+        }
+
+        // Cancel password button
+        const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+        if (cancelPasswordBtn) {
+            cancelPasswordBtn.addEventListener('click', () => this.hidePasswordSection());
+        }
+
+        // Setup password toggles
+        this.setupPasswordToggles();
     },
 
     /**
@@ -162,6 +183,9 @@ const ProfileController = {
                 adminActions.style.display = 'none';
             }
         }
+
+        // Check if user needs to set password (Google users)
+        this.checkPasswordNeeded(user);
     },
 
     /**
@@ -284,6 +308,198 @@ const ProfileController = {
      */
     handleBackClick() {
         window.location.href = '/index.html';
+    },
+
+    /**
+     * Checks if user needs to set a password (Google users)
+     * @param {Object} user - User profile data
+     */
+    async checkPasswordNeeded(user) {
+        // Show set password button for all users (they can set/change password anytime)
+        const setPasswordBtn = document.getElementById('setPasswordBtn');
+        if (setPasswordBtn) {
+            setPasswordBtn.style.display = 'block';
+        }
+    },
+
+    /**
+     * Shows password setting section
+     */
+    showPasswordSection() {
+        const passwordSection = document.getElementById('passwordSection');
+        const profileActions = document.getElementById('profileActions');
+        
+        if (passwordSection) {
+            passwordSection.style.display = 'block';
+        }
+        if (profileActions) {
+            profileActions.style.display = 'none';
+        }
+
+        // Clear password fields
+        const currentPassword = document.getElementById('currentPassword');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        if (currentPassword) currentPassword.value = '';
+        if (newPassword) newPassword.value = '';
+        if (confirmPassword) confirmPassword.value = '';
+
+        // Hide messages
+        const passwordError = document.getElementById('passwordError');
+        const passwordSuccess = document.getElementById('passwordSuccess');
+        if (passwordError) {
+            passwordError.style.display = 'none';
+            passwordError.textContent = '';
+        }
+        if (passwordSuccess) {
+            passwordSuccess.style.display = 'none';
+            passwordSuccess.textContent = '';
+        }
+    },
+
+    /**
+     * Hides password setting section
+     */
+    hidePasswordSection() {
+        const passwordSection = document.getElementById('passwordSection');
+        const profileActions = document.getElementById('profileActions');
+        
+        if (passwordSection) {
+            passwordSection.style.display = 'none';
+        }
+        if (profileActions) {
+            profileActions.style.display = 'flex';
+        }
+    },
+
+    /**
+     * Sets up password visibility toggles
+     */
+    setupPasswordToggles() {
+        const toggles = [
+            { inputId: 'currentPassword', toggleId: 'currentPasswordToggle', iconId: 'currentPasswordToggleIcon' },
+            { inputId: 'newPassword', toggleId: 'newPasswordToggle', iconId: 'newPasswordToggleIcon' },
+            { inputId: 'confirmPassword', toggleId: 'confirmPasswordToggle', iconId: 'confirmPasswordToggleIcon' }
+        ];
+
+        toggles.forEach(({ inputId, toggleId, iconId }) => {
+            const passwordInput = document.getElementById(inputId);
+            const toggleBtn = document.getElementById(toggleId);
+            const toggleIcon = document.getElementById(iconId);
+
+            if (passwordInput && toggleBtn && toggleIcon) {
+                toggleBtn.addEventListener('click', () => {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    // Toggle icon
+                    if (type === 'text') {
+                        toggleIcon.classList.remove('fa-eye');
+                        toggleIcon.classList.add('fa-eye-slash');
+                    } else {
+                        toggleIcon.classList.remove('fa-eye-slash');
+                        toggleIcon.classList.add('fa-eye');
+                    }
+                });
+            }
+        });
+    },
+
+    /**
+     * Saves new password
+     */
+    async savePassword() {
+        const currentPassword = document.getElementById('currentPassword');
+        const newPassword = document.getElementById('newPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const passwordError = document.getElementById('passwordError');
+        const passwordSuccess = document.getElementById('passwordSuccess');
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return;
+        }
+
+        const currentPwd = currentPassword.value.trim();
+        const newPwd = newPassword.value.trim();
+        const confirmPwd = confirmPassword.value.trim();
+
+        // Hide previous messages
+        if (passwordError) passwordError.style.display = 'none';
+        if (passwordSuccess) passwordSuccess.style.display = 'none';
+
+        // Validation
+        if (!newPwd) {
+            if (passwordError) {
+                passwordError.textContent = 'New password is required';
+                passwordError.style.display = 'block';
+            }
+            return;
+        }
+
+        if (newPwd.length < 6) {
+            if (passwordError) {
+                passwordError.textContent = 'Password must be at least 6 characters long';
+                passwordError.style.display = 'block';
+            }
+            return;
+        }
+
+        if (newPwd !== confirmPwd) {
+            if (passwordError) {
+                passwordError.textContent = 'Passwords do not match';
+                passwordError.style.display = 'block';
+            }
+            return;
+        }
+
+        try {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                throw new Error('No authentication token');
+            }
+
+            const response = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({
+                    password: newPwd,
+                    currentPassword: currentPwd || undefined
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to set password');
+            }
+
+            if (data.success) {
+                if (passwordSuccess) {
+                    passwordSuccess.textContent = data.message || 'Password set successfully!';
+                    passwordSuccess.style.display = 'block';
+                }
+                
+                // Clear fields
+                currentPassword.value = '';
+                newPassword.value = '';
+                confirmPassword.value = '';
+
+                // Hide section after 2 seconds
+                setTimeout(() => {
+                    this.hidePasswordSection();
+                }, 2000);
+            } else {
+                throw new Error('Invalid response from server');
+            }
+        } catch (error) {
+            if (passwordError) {
+                passwordError.textContent = error.message || 'Failed to set password';
+                passwordError.style.display = 'block';
+            }
+        }
     },
 
     /**

@@ -61,15 +61,15 @@ function configureCloudinary() {
 
 // Middleware to check if user is super admin
 async function requireSuperAdmin(req) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const { verifyToken, extractToken } = await import('../utils/jwt.js');
+  
+  const token = extractToken(req.headers.authorization);
+  if (!token) {
     return { authorized: false, error: 'Unauthorized' };
   }
   
-  const token = authHeader.substring(7);
-  const [email] = token.split(':');
-  
-  if (!email) {
+  const decoded = verifyToken(token);
+  if (!decoded) {
     return { authorized: false, error: 'Invalid token' };
   }
 
@@ -78,7 +78,7 @@ async function requireSuperAdmin(req) {
     const usersCollection = db.collection('users');
     
     const user = await usersCollection.findOne({ 
-      email: decodeURIComponent(email).toLowerCase() 
+      email: decoded.email.toLowerCase() 
     });
     
     if (!user || !user.isSuperAdmin) {

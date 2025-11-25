@@ -1,10 +1,11 @@
 /**
  * Vercel Serverless Function - Login
- * Uses MongoDB Atlas for user authentication
+ * Uses MongoDB Atlas for user authentication with JWT tokens
  */
 
 import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
+import { generateToken } from '../utils/jwt.js';
 
 // MongoDB connection (cached for serverless)
 let cachedClient = null;
@@ -77,6 +78,15 @@ export default async function handler(req, res) {
       });
     }
 
+    // Check if user has a password (Google users might not have one)
+    if (!user.password) {
+      return res.status(400).json({
+        success: false,
+        error: 'This account was created with Google. Please use "Continue with Google" to login, or set a password in your profile settings.',
+        requiresGoogleLogin: true
+      });
+    }
+
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
 
@@ -100,15 +110,15 @@ export default async function handler(req, res) {
       isSuperAdmin = true;
     }
 
-    // Create auth token (simple format for now)
-    const token = `${encodeURIComponent(user.email)}:${encodeURIComponent(user.name)}`;
-    
+    // Generate JWT token
     const userResponse = {
       id: user._id.toString(),
       name: user.name,
       email: user.email,
       isSuperAdmin: isSuperAdmin
     };
+
+    const token = generateToken(userResponse);
 
     res.status(200).json({
       success: true,
