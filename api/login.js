@@ -34,8 +34,9 @@ async function connectToDatabase() {
   const client = new MongoClient(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // 5 second timeout
-    connectTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 10000, // Increase to 10 seconds
+    connectTimeoutMS: 10000, // Increase to 10 seconds
+    socketTimeoutMS: 45000, // Add socket timeout
   });
 
   try {
@@ -62,7 +63,20 @@ async function connectToDatabase() {
   }
 }
 
+// Helper function to add timeout to promises
+function withTimeout(promise, timeoutMs, errorMessage) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    )
+  ]);
+}
+
 export default async function handler(req, res) {
+  // CRITICAL: Set Content-Type FIRST before anything else
+  res.setHeader('Content-Type', 'application/json');
+  
   // Track if response has been sent
   let responseSent = false;
   
@@ -73,9 +87,6 @@ export default async function handler(req, res) {
       return;
     }
     responseSent = true;
-    
-    // Always set Content-Type header
-    res.setHeader('Content-Type', 'application/json');
     return res.status(status).json(data);
   };
 
@@ -149,7 +160,11 @@ export default async function handler(req, res) {
     }
 
     try {
-      const { db } = await connectToDatabase();
+      const { db } = await withTimeout(
+        connectToDatabase(),
+        8000, // 8 second timeout
+        'Database connection timeout'
+      );
       const usersCollection = db.collection('users');
 
       // Find user by email
@@ -260,19 +275,35 @@ export default async function handler(req, res) {
       message: error.message,
       stack: error.stack,
       name: error.name,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.url,
+      hasBody: !!req.body,
+      envCheck: {
+        hasMongoUri: !!process.env.MONGODB_URI,
+        hasJwtSecret: !!process.env.JWT_SECRET
+      }
     });
 
     // Only send response if not already sent
     if (!responseSent) {
       try {
-        res.setHeader('Content-Type', 'application/json');
+        // Ensure Content-Type is set
+        if (!res.headersSent || !res.getHeader('Content-Type')) {
+          res.setHeader('Content-Type', 'application/json');
+        }
         return res.status(500).json({
           success: false,
           error: 'An unexpected error occurred. Please try again.'
         });
       } catch (sendError) {
         console.error('Failed to send error response:', sendError);
+        // Last resort - try to send basic response
+        try {
+          res.status(500).end('{"success":false,"error":"Server error"}');
+        } catch (finalError) {
+          console.error('Complete failure to send response:', finalError);
+        }
       }
     }
   }

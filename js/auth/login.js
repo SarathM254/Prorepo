@@ -21,13 +21,25 @@ async function checkAuthStatus() {
         });
         
         // Check if response is JSON before parsing
-        const contentType = response.headers.get('content-type');
+        const contentType = response.headers.get('content-type') || '';
         let data;
         
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            // Response is not JSON - clear token and return
+        try {
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Response is not JSON - might be HTML error page
+                const text = await response.text();
+                console.error('Non-JSON response in auth check:', {
+                    status: response.status,
+                    contentType: contentType,
+                    preview: text.substring(0, 200)
+                });
+                localStorage.removeItem('authToken');
+                return;
+            }
+        } catch (error) {
+            console.error('Auth check response parsing failed:', error);
             localStorage.removeItem('authToken');
             return;
         }
@@ -144,38 +156,59 @@ async function login(email, password) {
     loginBtnText.textContent = 'Signing in...';
     clearErrors();
     
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
     try {
         const response = await fetch('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password }),
+            signal: controller.signal // Add abort signal
         });
         
-        // Check if response is JSON before parsing
-        const contentType = response.headers.get('content-type');
-        let data;
+        clearTimeout(timeoutId); // Clear timeout if request succeeds
         
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type') || '';
+        let data;
+
+        // First, get the response as text to check what we received
+        let responseText;
         try {
-            if (contentType && contentType.includes('application/json')) {
-                const text = await response.text();
-                data = JSON.parse(text);
-            } else {
-                // Response is not JSON - likely an error page
-                const text = await response.text();
-                console.error('Non-JSON response received:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    contentType: contentType,
-                    preview: text.substring(0, 200)
-                });
-                throw new Error('Server error: Invalid response format. Please try again.');
+            responseText = await response.text();
+        } catch (readError) {
+            console.error('Failed to read response body:', readError);
+            throw new Error('Failed to receive server response. Please check your internet connection.');
+        }
+
+        // Try to parse as JSON
+        if (contentType.includes('application/json') || responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                console.error('Response text:', responseText.substring(0, 500));
+                throw new Error('Server returned invalid data. Please try again.');
             }
-        } catch (parseError) {
-            // If JSON parsing fails or response is not JSON
-            console.error('Response parsing error:', parseError);
-            throw new Error('Server error: Invalid response format. Please try again.');
+        } else {
+            // Response is HTML (likely Vercel error page)
+            console.error('Received HTML error page:', {
+                status: response.status,
+                statusText: response.statusText,
+                contentType: contentType,
+                preview: responseText.substring(0, 500)
+            });
+            
+            // Check if it's a Vercel error page
+            if (responseText.includes('Error:') || responseText.includes('Internal Server Error')) {
+                throw new Error('Server encountered an error. Please try again in a moment.');
+            } else {
+                throw new Error('Unexpected server response. Please try again.');
+            }
         }
         
         if (response.ok && data.success) {
@@ -200,13 +233,19 @@ async function login(email, password) {
             }
         }
     } catch (error) {
+        clearTimeout(timeoutId); // Clear timeout
+        
         console.error('Login error:', error);
         
         // Show user-friendly error message based on error type
         let errorMessage = 'Failed to login. Please check your credentials.';
         
+        // Timeout/Abort errors
+        if (error.name === 'AbortError') {
+            errorMessage = 'Request timed out. Please check your internet connection and try again.';
+        }
         // Network errors
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
             errorMessage = 'Network error. Please check your internet connection and try again.';
         }
         // Server response format errors
@@ -384,38 +423,59 @@ async function register(name, email, password) {
     loginBtnText.textContent = 'Signing up...';
     clearErrors();
     
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
     try {
         const response = await fetch('/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name, email, password })
+            body: JSON.stringify({ name, email, password }),
+            signal: controller.signal // Add abort signal
         });
         
-        // Check if response is JSON before parsing
-        const contentType = response.headers.get('content-type');
-        let data;
+        clearTimeout(timeoutId); // Clear timeout if request succeeds
         
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type') || '';
+        let data;
+
+        // First, get the response as text to check what we received
+        let responseText;
         try {
-            if (contentType && contentType.includes('application/json')) {
-                const text = await response.text();
-                data = JSON.parse(text);
-            } else {
-                // Response is not JSON - likely an error page
-                const text = await response.text();
-                console.error('Non-JSON response received:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    contentType: contentType,
-                    preview: text.substring(0, 200)
-                });
-                throw new Error('Server error: Invalid response format. Please try again.');
+            responseText = await response.text();
+        } catch (readError) {
+            console.error('Failed to read response body:', readError);
+            throw new Error('Failed to receive server response. Please check your internet connection.');
+        }
+
+        // Try to parse as JSON
+        if (contentType.includes('application/json') || responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                console.error('Response text:', responseText.substring(0, 500));
+                throw new Error('Server returned invalid data. Please try again.');
             }
-        } catch (parseError) {
-            // If JSON parsing fails or response is not JSON
-            console.error('Response parsing error:', parseError);
-            throw new Error('Server error: Invalid response format. Please try again.');
+        } else {
+            // Response is HTML (likely Vercel error page)
+            console.error('Received HTML error page:', {
+                status: response.status,
+                statusText: response.statusText,
+                contentType: contentType,
+                preview: responseText.substring(0, 500)
+            });
+            
+            // Check if it's a Vercel error page
+            if (responseText.includes('Error:') || responseText.includes('Internal Server Error')) {
+                throw new Error('Server encountered an error. Please try again in a moment.');
+            } else {
+                throw new Error('Unexpected server response. Please try again.');
+            }
         }
         
         if (response.ok && data.success) {
@@ -440,13 +500,19 @@ async function register(name, email, password) {
             }
         }
     } catch (error) {
+        clearTimeout(timeoutId); // Clear timeout
+        
         console.error('Registration error:', error);
         
         // Show user-friendly error message based on error type
         let errorMessage = 'Failed to register. Please try again.';
         
+        // Timeout/Abort errors
+        if (error.name === 'AbortError') {
+            errorMessage = 'Request timed out. Please check your internet connection and try again.';
+        }
         // Network errors
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
             errorMessage = 'Network error. Please check your internet connection and try again.';
         }
         // Server response format errors
