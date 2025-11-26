@@ -8,18 +8,35 @@ const AdminController = {
      * Initialize admin panel (for admin.html page)
      */
     async init() {
-        // Check if user is super admin
-        const isSuperAdmin = await this.checkSuperAdminAccess();
-        if (!isSuperAdmin) {
-            this.showError('Access denied. Super admin access required.');
+        // Check if user is super admin OR admin
+        const accessCheck = await this.checkAdminAccess();
+        if (!accessCheck.hasAccess) {
+            this.showError('Access denied. Admin access required.');
             setTimeout(() => {
                 window.location.href = '/index.html';
             }, 2000);
             return;
         }
 
-        // Load users
-        await this.loadAllUsers();
+        // Store user role
+        this.isSuperAdmin = accessCheck.isSuperAdmin;
+        this.isAdmin = accessCheck.isAdmin;
+
+        // Only super admin can see users section
+        if (!this.isSuperAdmin) {
+            // Hide Users section from sidebar
+            const usersNavItem = document.querySelector('[data-section="users"]');
+            if (usersNavItem) usersNavItem.style.display = 'none';
+            
+            // Hide Admins section from sidebar
+            const adminsNavItem = document.querySelector('[data-section="admins"]');
+            if (adminsNavItem) adminsNavItem.style.display = 'none';
+        }
+
+        // Load users (only if super admin)
+        if (this.isSuperAdmin) {
+            await this.loadAllUsers();
+        }
 
         // Setup event listeners
         this.setupEventListeners();
@@ -63,23 +80,29 @@ const AdminController = {
                 }
             }
 
-            // Load users statistics
-            const usersResponse = await fetch('/api/admin?type=users', {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
+            // Load users statistics (only for super admin)
+            if (this.isSuperAdmin) {
+                const usersResponse = await fetch('/api/admin?type=users', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
 
-            if (usersResponse.ok) {
-                const usersData = await usersResponse.json();
-                if (usersData.success && usersData.users) {
-                    const totalUsers = usersData.users.length;
-                    const totalUsersCount = document.getElementById('totalUsersCount');
-                    const usersBadge = document.getElementById('usersBadge');
+                if (usersResponse.ok) {
+                    const usersData = await usersResponse.json();
+                    if (usersData.success && usersData.users) {
+                        const totalUsers = usersData.users.length;
+                        const totalUsersCount = document.getElementById('totalUsersCount');
+                        const usersBadge = document.getElementById('usersBadge');
 
-                    if (totalUsersCount) totalUsersCount.textContent = totalUsers;
-                    if (usersBadge) usersBadge.textContent = totalUsers;
+                        if (totalUsersCount) totalUsersCount.textContent = totalUsers;
+                        if (usersBadge) usersBadge.textContent = totalUsers;
+                    }
                 }
+            } else {
+                // Hide user count card for admins
+                const userStatCard = document.querySelector('.stat-card:nth-child(3)');
+                if (userStatCard) userStatCard.style.display = 'none';
             }
 
             // Update recent activity
@@ -193,12 +216,12 @@ const AdminController = {
     },
 
     /**
-     * Check if current user is super admin
+     * Check if current user has admin access (super admin or admin)
      */
-    async checkSuperAdminAccess() {
+    async checkAdminAccess() {
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
-            return false;
+            return { hasAccess: false, isSuperAdmin: false, isAdmin: false };
         }
 
         try {
@@ -208,11 +231,32 @@ const AdminController = {
                 }
             });
             const data = await response.json();
-            return data.authenticated && data.user && data.user.isSuperAdmin === true;
+            
+            if (data.authenticated && data.user) {
+                const isSuperAdmin = data.user.isSuperAdmin === true;
+                const isAdmin = data.user.isAdmin === true;
+                const hasAccess = isSuperAdmin || isAdmin;
+                
+                return { 
+                    hasAccess: hasAccess,
+                    isSuperAdmin: isSuperAdmin,
+                    isAdmin: isAdmin
+                };
+            }
+            
+            return { hasAccess: false, isSuperAdmin: false, isAdmin: false };
         } catch (error) {
-            console.error('Super admin check error:', error);
-            return false;
+            console.error('Admin access check error:', error);
+            return { hasAccess: false, isSuperAdmin: false, isAdmin: false };
         }
+    },
+
+    /**
+     * Check if current user is super admin (DEPRECATED - use checkAdminAccess)
+     */
+    async checkSuperAdminAccess() {
+        const accessCheck = await this.checkAdminAccess();
+        return accessCheck.isSuperAdmin;
     },
 
     /**
@@ -221,6 +265,8 @@ const AdminController = {
     async loadAllUsers() {
         const usersListDiv = document.getElementById('usersList');
         const authToken = localStorage.getItem('authToken');
+
+        if (!usersListDiv) return; // Section might be hidden for admins
 
         try {
             const response = await fetch('/api/admin?type=users', {
@@ -244,12 +290,123 @@ const AdminController = {
             }
         } catch (error) {
             console.error('Load users error:', error);
-            usersListDiv.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-circle"></i> ${error.message}
-                </div>
-            `;
+            if (usersListDiv) {
+                usersListDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> ${error.message}
+                    </div>
+                `;
+            }
         }
+    },
+
+    /**
+     * Load all admins from API
+     */
+    async loadAllAdmins() {
+        const adminsListDiv = document.getElementById('adminsList');
+        const authToken = localStorage.getItem('authToken');
+
+        if (!adminsListDiv) return; // Section might be hidden for admins
+
+        try {
+            const response = await fetch('/api/admin?type=admins', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 403 || response.status === 401) {
+                    throw new Error('Super admin access required');
+                }
+                throw new Error('Failed to load admins');
+            }
+
+            const data = await response.json();
+            if (data.success && data.admins) {
+                this.renderAdminsList(data.admins);
+                
+                // Update badge
+                const adminsBadge = document.getElementById('adminsBadge');
+                if (adminsBadge) adminsBadge.textContent = data.admins.length;
+            } else {
+                throw new Error('Invalid response from server');
+            }
+        } catch (error) {
+            console.error('Load admins error:', error);
+            if (adminsListDiv) {
+                adminsListDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> ${error.message}
+                    </div>
+                `;
+            }
+        }
+    },
+
+    /**
+     * Render admins list
+     */
+    renderAdminsList(admins) {
+        const adminsListDiv = document.getElementById('adminsList');
+
+        if (!adminsListDiv) return;
+
+        if (admins.length === 0) {
+            adminsListDiv.innerHTML = '<p>No admins found.</p>';
+            return;
+        }
+
+        let tableHTML = `
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        admins.forEach(user => {
+            const createdDate = user.created_at 
+                ? new Date(user.created_at).toLocaleDateString() 
+                : 'N/A';
+            
+            let roleBadge;
+            if (user.isSuperAdmin) {
+                roleBadge = '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>';
+            } else if (user.isAdmin) {
+                roleBadge = '<span class="admin-badge"><i class="fas fa-user-shield"></i> Admin</span>';
+            }
+
+            tableHTML += `
+                <tr>
+                    <td>${this.escapeHtml(user.name)}</td>
+                    <td>${this.escapeHtml(user.email)}</td>
+                    <td>${roleBadge}</td>
+                    <td>${createdDate}</td>
+                    <td>
+                        ${!user.isSuperAdmin && user.isAdmin ? `
+                            <button class="btn btn-warning btn-sm" onclick="AdminController.demoteFromAdmin('${user.id}')">
+                                <i class="fas fa-arrow-down"></i> Remove Admin
+                            </button>
+                        ` : '<span style="color: #999;">-</span>'}
+                    </td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+
+        adminsListDiv.innerHTML = tableHTML;
     },
 
     /**
@@ -282,9 +439,14 @@ const AdminController = {
                 ? new Date(user.created_at).toLocaleDateString() 
                 : 'N/A';
             
-            const roleBadge = user.isSuperAdmin 
-                ? '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>'
-                : '<span>User</span>';
+            let roleBadge;
+            if (user.isSuperAdmin) {
+                roleBadge = '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>';
+            } else if (user.isAdmin) {
+                roleBadge = '<span class="admin-badge"><i class="fas fa-user-shield"></i> Admin</span>';
+            } else {
+                roleBadge = '<span>User</span>';
+            }
 
             tableHTML += `
                 <tr>
@@ -294,9 +456,20 @@ const AdminController = {
                     <td>${createdDate}</td>
                     <td>
                         ${!user.isSuperAdmin ? `
-                            <button class="delete-btn" onclick="AdminController.deleteUser('${user.id}')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                ${user.isAdmin ? `
+                                    <button class="btn btn-warning btn-sm" onclick="AdminController.demoteFromAdmin('${user.id}')" title="Remove Admin Role">
+                                        <i class="fas fa-arrow-down"></i> Remove Admin
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-success btn-sm" onclick="AdminController.promoteToAdmin('${user.id}')" title="Make Admin">
+                                        <i class="fas fa-arrow-up"></i> Make Admin
+                                    </button>
+                                `}
+                                <button class="delete-btn btn-sm" onclick="AdminController.deleteUser('${user.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
                         ` : '<span style="color: #999;">-</span>'}
                     </td>
                 </tr>
@@ -367,12 +540,89 @@ const AdminController = {
             if (response.ok && data.success) {
                 this.showSuccess('User deleted successfully!');
                 await this.loadAllUsers();
+                if (this.isSuperAdmin) {
+                    await this.loadAllAdmins(); // Refresh admins list if visible
+                }
             } else {
                 throw new Error(data.error || 'Failed to delete user');
             }
         } catch (error) {
             console.error('Delete user error:', error);
             this.showError(error.message || 'Failed to delete user');
+        }
+    },
+
+    /**
+     * Promote user to admin role
+     */
+    async promoteToAdmin(userId) {
+        if (!confirm('Are you sure you want to promote this user to Admin? They will gain access to the admin panel.')) {
+            return;
+        }
+
+        const authToken = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch(`/api/admin?type=users`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ userId, isAdmin: true })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                this.showSuccess('User promoted to Admin successfully!');
+                await this.loadAllUsers();
+                if (this.isSuperAdmin) {
+                    await this.loadAllAdmins(); // Refresh admins list if visible
+                }
+            } else {
+                throw new Error(data.error || 'Failed to promote user');
+            }
+        } catch (error) {
+            console.error('Promote to admin error:', error);
+            this.showError(error.message || 'Failed to promote user');
+        }
+    },
+
+    /**
+     * Demote admin to regular user
+     */
+    async demoteFromAdmin(userId) {
+        if (!confirm('Are you sure you want to remove Admin role from this user? They will lose access to the admin panel.')) {
+            return;
+        }
+
+        const authToken = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch(`/api/admin?type=users`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ userId, isAdmin: false })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                this.showSuccess('Admin role removed successfully!');
+                await this.loadAllUsers();
+                if (this.isSuperAdmin) {
+                    await this.loadAllAdmins(); // Refresh admins list
+                }
+            } else {
+                throw new Error(data.error || 'Failed to demote admin');
+            }
+        } catch (error) {
+            console.error('Demote from admin error:', error);
+            this.showError(error.message || 'Failed to demote admin');
         }
     },
 
@@ -448,6 +698,14 @@ const AdminController = {
                 this.deleteAllUsers();
             });
         }
+
+        // Load admins when section is clicked (if super admin)
+        const adminsNavItem = document.querySelector('[data-section="admins"]');
+        if (adminsNavItem && this.isSuperAdmin) {
+            adminsNavItem.addEventListener('click', async () => {
+                await this.loadAllAdmins();
+            });
+        }
     },
 
     /**
@@ -519,9 +777,14 @@ const AdminController = {
                 ? new Date(user.created_at).toLocaleDateString() 
                 : 'N/A';
             
-            const roleBadge = user.isSuperAdmin 
-                ? '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>'
-                : '<span>User</span>';
+            let roleBadge;
+            if (user.isSuperAdmin) {
+                roleBadge = '<span class="super-admin-badge"><i class="fas fa-crown"></i> Super Admin</span>';
+            } else if (user.isAdmin) {
+                roleBadge = '<span class="admin-badge"><i class="fas fa-user-shield"></i> Admin</span>';
+            } else {
+                roleBadge = '<span>User</span>';
+            }
 
             tableHTML += `
                 <tr>
@@ -531,9 +794,20 @@ const AdminController = {
                     <td>${createdDate}</td>
                     <td>
                         ${!user.isSuperAdmin ? `
-                            <button class="delete-btn" onclick="AdminController.deleteUserInModal('${user.id}')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                ${user.isAdmin ? `
+                                    <button class="btn btn-warning btn-sm" onclick="AdminController.demoteFromAdmin('${user.id}')" title="Remove Admin Role">
+                                        <i class="fas fa-arrow-down"></i> Remove Admin
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-success btn-sm" onclick="AdminController.promoteToAdmin('${user.id}')" title="Make Admin">
+                                        <i class="fas fa-arrow-up"></i> Make Admin
+                                    </button>
+                                `}
+                                <button class="delete-btn btn-sm" onclick="AdminController.deleteUserInModal('${user.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
                         ` : '<span style="color: #999;">-</span>'}
                     </td>
                 </tr>
@@ -571,6 +845,9 @@ const AdminController = {
             if (response.ok && data.success) {
                 this.showSuccessInModal('User deleted successfully! The user must create a new account to access the system.');
                 await this.loadAllUsersInModal();
+                if (this.isSuperAdmin) {
+                    await this.loadAllAdmins(); // Refresh admins list if visible
+                }
             } else {
                 throw new Error(data.error || 'Failed to delete user');
             }

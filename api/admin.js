@@ -92,6 +92,37 @@ async function requireSuperAdmin(req) {
   }
 }
 
+// Middleware to check if user is super admin OR admin
+async function requireAdminAccess(req) {
+  const token = extractToken(req.headers.authorization);
+  if (!token) {
+    return { authorized: false, error: 'Unauthorized' };
+  }
+  
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    return { authorized: false, error: 'Invalid token' };
+  }
+
+  try {
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
+    
+    const user = await usersCollection.findOne({ 
+      email: decoded.email.toLowerCase() 
+    });
+    
+    // Allow if super admin OR admin
+    if (!user || (!user.isSuperAdmin && !user.isAdmin)) {
+      return { authorized: false, error: 'Admin access required' };
+    }
+    
+    return { authorized: true, user, isSuperAdmin: user.isSuperAdmin || false };
+  } catch (error) {
+    return { authorized: false, error: 'Database error' };
+  }
+}
+
 // Helper to parse request body
 async function parseRequestBody(req) {
   if (typeof req.body === 'object' && req.body !== null && !Buffer.isBuffer(req.body)) {
@@ -495,6 +526,7 @@ async function handleUsers(req, res, db) {
       name: user.name,
       email: user.email,
       isSuperAdmin: user.isSuperAdmin || false,
+      isAdmin: user.isAdmin || false,
       created_at: user.created_at
     }));
 
@@ -599,6 +631,49 @@ async function handleUsers(req, res, db) {
     }
   }
 
+  // PATCH - Promote/Demote user to/from Admin
+  if (req.method === 'PATCH') {
+    const body = await parseRequestBody(req);
+    const { userId, isAdmin } = body;
+
+    if (!userId || typeof isAdmin !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: 'userId and isAdmin (boolean) are required'
+      });
+    }
+
+    // Prevent modifying super admin
+    const userToModify = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    if (userToModify && userToModify.isSuperAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Cannot modify super admin role'
+      });
+    }
+
+    // Update user's admin status
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { isAdmin: isAdmin } }
+    );
+
+    // Fetch updated user
+    const updatedUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: updatedUser._id.toString(),
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isSuperAdmin: updatedUser.isSuperAdmin || false,
+        isAdmin: updatedUser.isAdmin || false
+      },
+      message: isAdmin ? 'User promoted to admin' : 'Admin demoted to user'
+    });
+  }
+
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
@@ -620,6 +695,41 @@ async function handleWipeUsers(req, res, db) {
     message: `Successfully wiped ${result.deletedCount} users. All existing credentials have been deleted.`,
     deletedCount: result.deletedCount
   });
+}
+
+// Handle Admins Operations (list all admins)
+async function handleAdmins(req, res, db) {
+  const usersCollection = db.collection('users');
+
+  // GET - List all admins (super admins and regular admins)
+  if (req.method === 'GET') {
+    const admins = await usersCollection
+      .find({
+        $or: [
+          { isSuperAdmin: true },
+          { isAdmin: true }
+        ]
+      })
+      .project({ password: 0 })
+      .sort({ created_at: -1 })
+      .toArray();
+
+    const formattedAdmins = admins.map(user => ({
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      isSuperAdmin: user.isSuperAdmin || false,
+      isAdmin: user.isAdmin || false,
+      created_at: user.created_at
+    }));
+
+    return res.status(200).json({
+      success: true,
+      admins: formattedAdmins
+    });
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
 }
 
 // Handle Restore Super Admin Password
@@ -686,7 +796,7 @@ export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -694,33 +804,71 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Check super admin access (except for health check)
-  const authCheck = await requireSuperAdmin(req);
-  if (!authCheck.authorized) {
-    return res.status(authCheck.error === 'Super admin access required' ? 403 : 401).json({
-      success: false,
-      error: authCheck.error
-    });
-  }
-
   try {
     const { db } = await connectToDatabase();
     const type = req.query.type || 'articles'; // Default to articles
 
-    // Route based on type
+    // Route based on type with appropriate authentication
     switch (type) {
       case 'articles':
+        // Articles: Allow both Super Admin and Admin
+        const articlesAuthCheck = await requireAdminAccess(req);
+        if (!articlesAuthCheck.authorized) {
+          return res.status(articlesAuthCheck.error === 'Admin access required' ? 403 : 401).json({
+            success: false,
+            error: articlesAuthCheck.error
+          });
+        }
         return await handleArticles(req, res, db);
+      
       case 'users':
+        // Users: Only Super Admin
+        const usersAuthCheck = await requireSuperAdmin(req);
+        if (!usersAuthCheck.authorized) {
+          return res.status(usersAuthCheck.error === 'Super admin access required' ? 403 : 401).json({
+            success: false,
+            error: usersAuthCheck.error
+          });
+        }
         return await handleUsers(req, res, db);
+      
+      case 'admins':
+        // Admins: Only Super Admin
+        const adminsAuthCheck = await requireSuperAdmin(req);
+        if (!adminsAuthCheck.authorized) {
+          return res.status(adminsAuthCheck.error === 'Super admin access required' ? 403 : 401).json({
+            success: false,
+            error: adminsAuthCheck.error
+          });
+        }
+        return await handleAdmins(req, res, db);
+      
       case 'wipe-users':
+        // Wipe users: Only Super Admin
+        const wipeAuthCheck = await requireSuperAdmin(req);
+        if (!wipeAuthCheck.authorized) {
+          return res.status(wipeAuthCheck.error === 'Super admin access required' ? 403 : 401).json({
+            success: false,
+            error: wipeAuthCheck.error
+          });
+        }
         return await handleWipeUsers(req, res, db);
+      
       case 'restore-password':
+        // Restore password: Only Super Admin
+        const restoreAuthCheck = await requireSuperAdmin(req);
+        if (!restoreAuthCheck.authorized) {
+          return res.status(restoreAuthCheck.error === 'Super admin access required' ? 403 : 401).json({
+            success: false,
+            error: restoreAuthCheck.error
+          });
+        }
         return await handleRestorePassword(req, res, db);
+      
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid type parameter. Use: articles, users, wipe-users, or restore-password'
+          error: 'Invalid type parameter. Use: articles, users, admins, wipe-users, or restore-password'
         });
     }
   } catch (error) {
@@ -730,4 +878,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
 

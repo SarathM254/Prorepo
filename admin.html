@@ -37,6 +37,11 @@
                 <span>Users</span>
                 <span class="badge" id="usersBadge">0</span>
             </a>
+            <a href="#admins" class="nav-item" data-section="admins">
+                <i class="fas fa-user-shield"></i>
+                <span>Admins</span>
+                <span class="badge" id="adminsBadge">0</span>
+            </a>
             <a href="#settings" class="nav-item" data-section="settings">
                 <i class="fas fa-cog"></i>
                 <span>Settings</span>
@@ -250,6 +255,20 @@
                     <button class="btn btn-danger" id="deleteAllUsersBtn">
                 <i class="fas fa-trash"></i> Delete All Users (Except Super Admin)
             </button>
+                </div>
+            </section>
+
+            <!-- Admins Management Section -->
+            <section class="admin-section" id="adminsSection">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-user-shield"></i> All Admins</h2>
+                    </div>
+                    <div id="adminsList">
+                        <div class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Loading admins...
+                        </div>
+                    </div>
                 </div>
             </section>
 

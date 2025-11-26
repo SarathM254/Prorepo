@@ -10,14 +10,18 @@ const AdminPanel = {
      * Initialize admin panel
      */
     async init() {
-        // Check if user is super admin
-        const isSuperAdmin = await this.checkSuperAdminAccess();
-        if (!isSuperAdmin) {
-            this.showError('Access denied. Super admin access required.');
-            setTimeout(() => {
-                window.location.href = '/index.html';
-            }, 2000);
-            return;
+        // Check if user has admin access (super admin or admin)
+        // This check is already done in AdminController.init(), so we can skip it here
+        // But we'll still check for backward compatibility
+        if (typeof AdminController !== 'undefined' && AdminController.checkAdminAccess) {
+            const accessCheck = await AdminController.checkAdminAccess();
+            if (!accessCheck.hasAccess) {
+                this.showError('Access denied. Admin access required.');
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 2000);
+                return;
+            }
         }
 
         // Setup sidebar navigation
@@ -41,26 +45,14 @@ const AdminPanel = {
     },
 
     /**
-     * Check if current user is super admin
+     * Check if current user is super admin (DEPRECATED - use AdminController.checkAdminAccess)
      */
     async checkSuperAdminAccess() {
-        const authToken = localStorage.getItem('authToken');
-        if (!authToken) {
-            return false;
+        if (typeof AdminController !== 'undefined' && AdminController.checkAdminAccess) {
+            const accessCheck = await AdminController.checkAdminAccess();
+            return accessCheck.isSuperAdmin;
         }
-
-        try {
-            const response = await fetch('/api/auth/status', {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
-            const data = await response.json();
-            return data.authenticated && data.user && data.user.isSuperAdmin === true;
-        } catch (error) {
-            console.error('Super admin check error:', error);
-            return false;
-        }
+        return false;
     },
 
     /**
@@ -139,6 +131,7 @@ const AdminPanel = {
                 dashboard: 'Dashboard',
                 articles: 'Articles Management',
                 users: 'Users Management',
+                admins: 'Admins Management',
                 settings: 'Settings'
             };
             pageTitle.textContent = titles[sectionName] || 'Admin Panel';
@@ -161,6 +154,11 @@ const AdminPanel = {
             case 'users':
                 if (typeof AdminController !== 'undefined' && AdminController.loadAllUsers) {
                     await AdminController.loadAllUsers();
+                }
+                break;
+            case 'admins':
+                if (typeof AdminController !== 'undefined' && AdminController.loadAllAdmins) {
+                    await AdminController.loadAllAdmins();
                 }
                 break;
         }

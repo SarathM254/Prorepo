@@ -315,6 +315,30 @@
     font-size: 0.85rem;
 }
 
+.btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
 /* Toolbar */
 .toolbar {
     display: flex;
@@ -752,6 +776,22 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+}
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.admin-badge i {
+    font-size: 11px;
 }
 
 /* Bulk Actions */
