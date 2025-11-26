@@ -107,11 +107,16 @@ const AppController = {
             const data = await response.json();
             
             if (data.authenticated) {
-                // Store super admin status
+                // Store admin status (super admin or admin)
                 if (data.user.isSuperAdmin) {
                     localStorage.setItem('isSuperAdmin', 'true');
+                    localStorage.setItem('isAdmin', 'true'); // Super admin is also admin
+                } else if (data.user.isAdmin) {
+                    localStorage.removeItem('isSuperAdmin');
+                    localStorage.setItem('isAdmin', 'true');
                 } else {
                     localStorage.removeItem('isSuperAdmin');
+                    localStorage.removeItem('isAdmin');
                 }
                 ProfileView.updateProfileButton(data.user);
                 
@@ -134,12 +139,14 @@ const AppController = {
                 console.log("Not authenticated - redirecting to login");
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('isSuperAdmin');
+                localStorage.removeItem('isAdmin');
                 window.location.href = '/login.html';
             }
         } catch (error) {
             console.error('Auth check failed:', error);
             localStorage.removeItem('authToken');
             localStorage.removeItem('isSuperAdmin');
+            localStorage.removeItem('isAdmin');
             window.location.href = '/login.html';
         }
     },
@@ -725,8 +732,10 @@ const AppController = {
      */
     async handleLogout() {
         if (await ArticleModel.logout()) {
-            // Clear auth token
+            // Clear auth token and admin status
             localStorage.removeItem('authToken');
+            localStorage.removeItem('isSuperAdmin');
+            localStorage.removeItem('isAdmin');
             // Redirect to login page
             window.location.href = '/login.html';
         } else {

@@ -174,10 +174,10 @@ const ProfileController = {
         if (editName) editName.value = user.name || '';
         if (editEmail) editEmail.value = user.email || '';
 
-        // Show/hide admin actions
+        // Show/hide admin actions (for both super admin and admin)
         const adminActions = document.getElementById('adminActions');
         if (adminActions) {
-            if (user.isSuperAdmin === true) {
+            if (user.isSuperAdmin === true || user.isAdmin === true) {
                 adminActions.style.display = 'block';
             } else {
                 adminActions.style.display = 'none';
@@ -515,6 +515,7 @@ const ProfileController = {
             if (response.ok) {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('isSuperAdmin');
+                localStorage.removeItem('isAdmin');
                 window.location.href = '/login.html';
             } else {
                 throw new Error('Logout failed');
@@ -524,6 +525,7 @@ const ProfileController = {
             // Still clear local storage and redirect
             localStorage.removeItem('authToken');
             localStorage.removeItem('isSuperAdmin');
+            localStorage.removeItem('isAdmin');
             window.location.href = '/login.html';
         }
     },

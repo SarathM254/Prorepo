@@ -59,9 +59,9 @@ const ProfileView = {
                         </div>
                     </div>
                     <div class="profile-actions">
-                        ${user.isSuperAdmin ? `
-                            <button class="admin-panel-btn" id="adminPanelBtn" style="background: #FFD700; color: #333; margin-bottom: 10px;">
-                                <i class="fas fa-crown"></i> Admin Panel
+                        ${user.isSuperAdmin === true || user.isAdmin === true ? `
+                            <button class="admin-panel-btn" id="adminPanelBtn" style="background: ${user.isSuperAdmin ? '#FFD700' : '#667eea'}; color: ${user.isSuperAdmin ? '#333' : 'white'}; margin-bottom: 10px;">
+                                <i class="fas ${user.isSuperAdmin ? 'fa-crown' : 'fa-user-shield'}"></i> Admin Panel
                             </button>
                         ` : ''}
                         <button class="edit-profile-btn" id="editProfileBtn">
