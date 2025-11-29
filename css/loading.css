@@ -3,13 +3,24 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 50vh;
+    min-height: 400px;
+    flex-direction: column;
+    gap: var(--spacing-md);
     padding: 2rem;
 }
 
 .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
     text-align: center;
     color: var(--color-text-secondary);
+}
+
+.loading-spinner p {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
 }
 
 .loading-spinner .spinner {

@@ -29,13 +29,23 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
-    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    transition: transform var(--transition-base), 
+                box-shadow var(--transition-base),
+                border-color var(--transition-base);
+    border: 1px solid transparent; /* Add border for hover effect */
     margin-bottom: var(--spacing-md);
 }
 
 .news-card:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-xl);
+    border-color: rgba(102, 126, 234, 0.2); /* Subtle border on hover */
+}
+
+/* Better focus states for accessibility */
+.news-card:focus-within {
+    outline: 2px solid var(--color-primary-start);
+    outline-offset: 2px;
 }
 
 /* Card Source and Actions */
@@ -123,6 +133,9 @@
 
 .card-content {
     padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm); /* Consistent spacing between elements */
 }
 
 .card-title {
@@ -131,6 +144,21 @@
     margin-bottom: var(--spacing-md);
     line-height: 1.4;
     color: var(--color-background-dark);
+    letter-spacing: -0.01em; /* Tighter for headings */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    /* Better wrapping */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    
+    /* Hover effect for better interactivity */
+    transition: color var(--transition-base);
+}
+
+.news-card:hover .card-title {
+    color: var(--color-primary-start);
 }
 
 .featured-card .card-title {
@@ -139,9 +167,25 @@
 }
 
 .card-description {
-    color: var(--color-text-secondary);
+    color: #555; /* Darker for better contrast than #666 */
     margin-bottom: var(--spacing-md);
-    line-height: var(--line-height-base);
+    line-height: 1.7; /* Increased from 1.6 for better readability */
+    font-size: var(--font-size-base);
+    font-weight: 400;
+    letter-spacing: 0.01em; /* Subtle letter spacing for clarity */
+    word-spacing: 0.05em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    /* Better text wrapping */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+    
+    /* Maintain article dimensions - no changes to container */
+    display: block;
+    max-height: none; /* Ensure text isn't cut off */
 }
 
 .card-meta {
@@ -149,16 +193,19 @@
     justify-content: space-between;
     align-items: center;
     font-size: var(--font-size-sm);
-    color: #888;
+    color: #777; /* Slightly darker for better readability */
+    margin-top: auto; /* Push to bottom */
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid #f0f0f0; /* Subtle divider */
 }
 
 .author {
     font-weight: 500;
-    color: var(--color-text-secondary);
+    color: var(--color-text-primary); /* Darker than secondary */
 }
 
 .time {
-    color: #999;
+    color: #999; /* Maintain lighter for time */
 }
 
 /* Loading animation */
@@ -226,8 +273,8 @@
     }
     
     .card-description {
-        font-size: 1rem;
-        line-height: 1.6;
+        font-size: 0.95rem; /* Slightly smaller on mobile */
+        line-height: 1.65;
         margin-bottom: 1rem;
     }
     
@@ -318,6 +365,11 @@
     
     .featured-card .card-image {
         aspect-ratio: 15 / 11;
+    }
+    
+    .card-description {
+        font-size: 1rem;
+        line-height: 1.75; /* Slightly more spacing on desktop */
     }
 }
 

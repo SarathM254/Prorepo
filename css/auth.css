@@ -5,9 +5,10 @@
     box-sizing: border-box;
 }
 
+/* Ensure white background for login page - override base.css */
 body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff !important; /* Pure white background - must override base.css */
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -18,12 +19,22 @@ body {
 .login-container {
     background: white;
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     padding: 3rem;
     width: 100%;
     max-width: 400px;
     position: relative;
     overflow: hidden;
+    
+    /* Elegant multi-layer shadow that fades outward */
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.02),      /* Very close, very subtle */
+        0 4px 8px rgba(0, 0, 0, 0.03),      /* Close layer */
+        0 8px 16px rgba(0, 0, 0, 0.04),     /* Medium layer */
+        0 16px 32px rgba(0, 0, 0, 0.05),    /* Outer layer */
+        0 32px 64px rgba(0, 0, 0, 0.06);    /* Fading trail */
+    
+    /* Smooth transitions for hover effects */
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .login-container::before {
@@ -74,8 +85,25 @@ body {
     border: 2px solid #e1e5e9;
     border-radius: 10px;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease; /* Changed from border-color only */
     outline: none;
+    background: #fff;
+}
+
+.form-group input:hover {
+    border-color: #d1d5db; /* Subtle hover effect */
+}
+
+.form-group input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #fff;
+}
+
+/* Better placeholder styling */
+.form-group input::placeholder {
+    color: #9ca3af;
+    opacity: 1;
 }
 
 .password-input-wrapper {
@@ -114,10 +142,6 @@ body {
     font-size: 1.1rem;
 }
 
-.form-group input:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
 
 .form-group input.error {
     border-color: #e74c3c;
@@ -205,38 +229,41 @@ body {
     color: white;
 }
 
-.google-login-section {
-    text-align: center;
-    margin: 2rem 0;
-}
-
 .login-description {
-    color: #64748b;
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.5;
 }
 
 .google-btn {
     width: 100%;
-    padding: 1rem;
+    padding: var(--spacing-md) var(--spacing-lg);
     background: white;
     color: #333;
     border: 2px solid #e1e5e9;
     border-radius: 10px;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: var(--spacing-sm);
     margin: 0 auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .google-btn:hover {
     background: #f8f9fa;
     border-color: #d1d5db;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.google-btn:active {
+    transform: translateY(0);
 }
 
 .google-btn:disabled {
@@ -303,34 +330,80 @@ body {
     margin-bottom: 0.25rem;
 }
 
-/* Login Toggle */
-.login-toggle {
+/* Login Options Container */
+.login-options {
+    width: 100%;
+}
+
+/* Login Section Wrapper */
+.login-section {
+    width: 100%;
+    margin-bottom: var(--spacing-xl);
+}
+
+.login-section-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-lg);
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-    border-bottom: 2px solid #e1e5e9;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
-.toggle-btn {
-    flex: 1;
-    padding: 0.75rem;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: #666;
+.login-section-title i {
+    color: var(--color-primary-start);
+}
+
+/* Divider Between Login Methods */
+.login-divider {
+    position: relative;
+    text-align: center;
+    margin: var(--spacing-xxl) 0;
+    color: var(--color-text-secondary);
+}
+
+.login-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e1e5e9;
+}
+
+.login-divider span {
+    background: white;
+    padding: 0 var(--spacing-md);
+    position: relative;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
+    font-size: var(--font-size-sm);
 }
 
-.toggle-btn.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
+/* Email Login Section */
+.email-login-section {
+    /* Already styled via .login-section */
 }
 
-.toggle-btn:hover {
-    color: #667eea;
+/* Google Login Section */
+.google-login-section {
+    padding: var(--spacing-lg) 0;
+}
+
+.google-login-content {
+    text-align: center;
+}
+
+/* Optional: Subtle hover enhancement */
+.login-container:hover {
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.03),
+        0 4px 8px rgba(0, 0, 0, 0.04),
+        0 8px 16px rgba(0, 0, 0, 0.05),
+        0 16px 32px rgba(0, 0, 0, 0.06),
+        0 32px 64px rgba(0, 0, 0, 0.07);
+    transform: translateY(-2px);
 }
 
 /* Login Form Container */
@@ -385,12 +458,45 @@ body {
 
 @media (max-width: 480px) {
     .login-container {
-        padding: 2rem;
+        padding: 2rem 1.5rem; /* Slightly reduced padding */
         margin: 0.5rem;
+        border-radius: 16px; /* Slightly smaller radius on mobile */
+        /* Slightly lighter shadow on mobile for performance */
+        box-shadow: 
+            0 1px 2px rgba(0, 0, 0, 0.02),
+            0 2px 4px rgba(0, 0, 0, 0.03),
+            0 4px 8px rgba(0, 0, 0, 0.04),
+            0 8px 16px rgba(0, 0, 0, 0.05);
     }
     
     .logo h1 {
         font-size: 2rem;
+    }
+    
+    .login-section-title {
+        font-size: var(--font-size-base);
+    }
+    
+    .login-divider {
+        margin: var(--spacing-xl) 0;
+    }
+    
+    .google-btn {
+        padding: 0.875rem var(--spacing-md);
+        font-size: 0.95rem;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .login-container {
+        max-width: 450px;
+        padding: 2.5rem;
+    }
+    
+    .login-options {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xl);
     }
 }
 

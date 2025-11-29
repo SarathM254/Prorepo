@@ -110,9 +110,18 @@ body {
 /* Focus styles for accessibility */
 .news-card:focus,
 .nav-link:focus,
-button:focus {
+button:focus,
+input:focus,
+a:focus {
     outline: 2px solid #667eea;
-    outline-offset: 2px;
+    outline-offset: 3px; /* Increased offset */
+    border-radius: 4px;
+}
+
+/* Remove outline for mouse users but keep for keyboard */
+.news-card:focus:not(:focus-visible),
+button:focus:not(:focus-visible) {
+    outline: none;
 }
 
 /* Print styles */
