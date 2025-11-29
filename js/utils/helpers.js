@@ -30,6 +30,34 @@ const Helpers = {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    /**
+     * Gets authentication headers for API requests
+     * Supports both session-based (local) and token-based (production) auth
+     * @param {Object} options - Additional fetch options
+     * @returns {Object} Fetch options with auth headers
+     */
+    getAuthHeaders(options = {}) {
+        const headers = options.headers || {};
+        const authToken = localStorage.getItem('authToken');
+        
+        // Always include credentials for session-based auth (local development)
+        const fetchOptions = {
+            ...options,
+            credentials: 'include',
+            headers: {
+                ...headers,
+                'Content-Type': headers['Content-Type'] || 'application/json'
+            }
+        };
+        
+        // Add Bearer token if available (for production/Vercel)
+        if (authToken) {
+            fetchOptions.headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        return fetchOptions;
     }
 };
 

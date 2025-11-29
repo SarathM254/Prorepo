@@ -7,18 +7,28 @@
  * Checks if user is authenticated
  */
 async function checkAuthStatus() {
-    const authToken = localStorage.getItem('authToken');
+    // Check if we're on localhost (local development)
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.port === '3000';
     
-    if (!authToken) {
-        return; // Not logged in, stay on login page
+    // Prepare request options
+    const requestOptions = {
+        credentials: 'include' // Always include cookies (works for both local and production)
+    };
+    
+    // For production, also include Bearer token if available
+    if (!isLocalhost) {
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+            requestOptions.headers = {
+                'Authorization': `Bearer ${authToken}`
+            };
+        }
     }
     
     try {
-        const response = await fetch('/api/auth/status', {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
+        const response = await fetch('/api/auth/status', requestOptions);
         
         // Check if response is JSON before parsing
         const contentType = response.headers.get('content-type') || '';
@@ -35,23 +45,27 @@ async function checkAuthStatus() {
                     contentType: contentType,
                     preview: text.substring(0, 200)
                 });
-                localStorage.removeItem('authToken');
                 return;
             }
         } catch (error) {
             console.error('Auth check response parsing failed:', error);
-            localStorage.removeItem('authToken');
             return;
         }
         
         if (data.authenticated) {
-            window.location.href = '/index.html';
+            // Only redirect if we're on the login page
+            if (window.location.pathname.includes('login')) {
+                window.location.href = '/index.html';
+            }
+            // If already on index.html or another page, don't redirect
         } else {
-            localStorage.removeItem('authToken');
+            // Clear token if not authenticated (production)
+            if (!isLocalhost) {
+                localStorage.removeItem('authToken');
+            }
         }
     } catch (error) {
         console.error('Auth check failed:', error);
-        localStorage.removeItem('authToken');
     }
 }
 
@@ -139,8 +153,18 @@ document.addEventListener('DOMContentLoaded', () => {
  * Handles Google OAuth login - redirects to Google
  */
 function handleGoogleLogin() {
-    // Redirect to Google OAuth endpoint
-    window.location.href = '/api/auth/google';
+    // Check if we're on localhost (local development)
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.port === '3000';
+    
+    if (isLocalhost) {
+        // For local development, show a helpful message
+        showError('Google OAuth is not available for local development. Please use Email/Password login instead. Google OAuth is available in the production deployment.');
+    } else {
+        // Production - redirect to Google OAuth endpoint
+        window.location.href = '/api/auth/google';
+    }
 }
 
 /**
@@ -166,6 +190,7 @@ async function login(email, password) {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include', // Important: include cookies for session
             body: JSON.stringify({ email, password }),
             signal: controller.signal // Add abort signal
         });
@@ -212,10 +237,21 @@ async function login(email, password) {
         }
         
         if (response.ok && data.success) {
-            // Store token
+            // Check if we're on localhost (local development)
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1' ||
+                               window.location.port === '3000';
+            
+            // Store token if provided (production/Vercel)
             if (data.token) {
                 localStorage.setItem('authToken', data.token);
+            } else if (!isLocalhost) {
+                // Production but no token - clear any old token
+                localStorage.removeItem('authToken');
             }
+            
+            // For local development, session is automatically handled via cookies
+            // For production, token is stored in localStorage
             
             // Redirect to home
             window.location.href = '/index.html';
@@ -433,6 +469,7 @@ async function register(name, email, password) {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include', // Important: include cookies for session
             body: JSON.stringify({ name, email, password }),
             signal: controller.signal // Add abort signal
         });
@@ -479,10 +516,21 @@ async function register(name, email, password) {
         }
         
         if (response.ok && data.success) {
-            // Store token
+            // Check if we're on localhost (local development)
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1' ||
+                               window.location.port === '3000';
+            
+            // Store token if provided (production/Vercel)
             if (data.token) {
                 localStorage.setItem('authToken', data.token);
+            } else if (!isLocalhost) {
+                // Production but no token - clear any old token
+                localStorage.removeItem('authToken');
             }
+            
+            // For local development, session is automatically handled via cookies
+            // For production, token is stored in localStorage
             
             // Redirect to home
             window.location.href = '/index.html';

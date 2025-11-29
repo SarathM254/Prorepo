@@ -185,8 +185,17 @@ app.post('/api/logout', (req, res) => {
 
 // Check authentication status
 app.get('/api/auth/status', (req, res) => {
+    // Support both session-based and token-based auth (for compatibility)
+    const authHeader = req.headers.authorization;
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+    }
+    
+    // Check session first (primary method for local server)
     if (req.session && req.session.userId) {
-        res.json({
+        return res.json({
             authenticated: true,
             user: {
                 id: req.session.userId,
@@ -194,9 +203,21 @@ app.get('/api/auth/status', (req, res) => {
                 email: req.session.userEmail
             }
         });
-    } else {
-        res.json({ authenticated: false });
     }
+    
+    // If no session but token provided, treat as not authenticated (local server uses sessions)
+    res.json({ authenticated: false });
+});
+
+// Google OAuth endpoint (for local development)
+app.get('/api/auth/google', (req, res) => {
+    // For local development, Google OAuth requires Google Cloud Console setup
+    // This endpoint provides helpful information
+    res.status(501).json({ 
+        error: 'Google OAuth is not configured for local development.',
+        message: 'Google OAuth requires Google Cloud Console setup with OAuth 2.0 credentials. For local development, please use Email/Password login instead.',
+        note: 'Google OAuth is available in the production deployment on Vercel.'
+    });
 });
 
 // Get user profile
