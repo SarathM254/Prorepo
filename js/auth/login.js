@@ -80,9 +80,6 @@ async function checkAuthStatus() {
     }
 }
 
-// Check auth status on page load (but will exit early if setupPassword=true)
-checkAuthStatus();
-
 // Handle Google OAuth callback (token in URL)
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -97,14 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check if password setup is required
         if (setupPassword) {
             // Show password setup modal instead of redirecting
+            // BUT continue to set up form listeners below
             showPasswordSetupModal();
             // Clean URL - remove query parameters
             window.history.replaceState({}, document.title, '/login.html');
+            // DON'T return here - we need to set up form listeners
         } else {
             // Existing user with password - redirect to home
             window.location.href = '/index.html';
+            return; // Exit early for redirect
         }
-        return;
     }
     
     if (error) {
@@ -121,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup password toggle
     setupPasswordToggle();
 
-    // Setup password setup form
+    // Setup password setup form (needed for modal)
     setupPasswordSetupForm();
 
     // Login/Register form submission
@@ -176,6 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const googleBtn = document.getElementById('googleLoginBtn');
     if (googleBtn) {
         googleBtn.addEventListener('click', handleGoogleLogin);
+    }
+    
+    // Run checkAuthStatus AFTER handling URL params
+    // Only if we don't have a token or setupPassword flag
+    if (!token && !setupPassword) {
+        checkAuthStatus();
     }
 });
 
@@ -740,7 +745,43 @@ async function handlePasswordSetup(e) {
             })
         });
         
-        const data = await response.json();
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type') || '';
+        let data;
+
+        // Get response as text first
+        let responseText;
+        try {
+            responseText = await response.text();
+        } catch (readError) {
+            console.error('Failed to read response body:', readError);
+            throw new Error('Failed to receive server response. Please check your internet connection.');
+        }
+
+        // Parse as JSON if possible
+        if (contentType.includes('application/json') || responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                console.error('Response text:', responseText.substring(0, 500));
+                throw new Error('Server returned invalid data. Please try again.');
+            }
+        } else {
+            // Response is HTML (likely error page)
+            console.error('Received HTML error page:', {
+                status: response.status,
+                statusText: response.statusText,
+                contentType: contentType,
+                preview: responseText.substring(0, 500)
+            });
+            
+            if (responseText.includes('Error:') || responseText.includes('Internal Server Error')) {
+                throw new Error('Server encountered an error. Please try again in a moment.');
+            } else {
+                throw new Error('Unexpected server response. Please try again.');
+            }
+        }
         
         if (response.ok && data.success) {
             // Password set successfully - redirect to home

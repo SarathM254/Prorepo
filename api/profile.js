@@ -128,9 +128,15 @@ export default async function handler(req, res) {
           });
         }
 
-        // If user has a password, require current password verification
-        if (currentUser.password) {
-          if (!currentPassword) {
+        // Check if user is setting password for the first time (Google user)
+        const isFirstTimePasswordSetup = !currentUser.password || currentUser.password === null || (typeof currentUser.password === 'string' && currentUser.password.trim() === '');
+
+        if (isFirstTimePasswordSetup) {
+          // Google user setting password for first time - no current password needed
+          // Skip current password validation
+        } else {
+          // User already has a password - require current password
+          if (!currentPassword || currentPassword.trim() === '') {
             return res.status(400).json({
               success: false,
               error: 'Current password is required to change your password'
@@ -145,7 +151,6 @@ export default async function handler(req, res) {
             });
           }
         }
-        // If user doesn't have a password (Google user setting password for first time), no current password needed
 
         // Validate new password length
         if (password.length < 6) {
