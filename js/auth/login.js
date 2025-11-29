@@ -5,8 +5,19 @@
 
 /**
  * Checks if user is authenticated
+ * IMPORTANT: Will NOT redirect if setupPassword=true in URL
  */
 async function checkAuthStatus() {
+    // Check if password setup is required - if yes, skip auth check
+    const urlParams = new URLSearchParams(window.location.search);
+    const setupPassword = urlParams.get('setupPassword') === 'true';
+    
+    // If password setup is needed, don't check auth status yet
+    // Let DOMContentLoaded handler show the modal first
+    if (setupPassword) {
+        return; // Exit early
+    }
+    
     // Check if we're on localhost (local development)
     const isLocalhost = window.location.hostname === 'localhost' || 
                        window.location.hostname === '127.0.0.1' ||
@@ -53,8 +64,8 @@ async function checkAuthStatus() {
         }
         
         if (data.authenticated) {
-            // Only redirect if we're on the login page
-            if (window.location.pathname.includes('login')) {
+            // Only redirect if we're on the login page and NOT setting up password
+            if (window.location.pathname.includes('login') && !setupPassword) {
                 window.location.href = '/index.html';
             }
             // If already on index.html or another page, don't redirect
@@ -69,7 +80,7 @@ async function checkAuthStatus() {
     }
 }
 
-// Check auth status on page load
+// Check auth status on page load (but will exit early if setupPassword=true)
 checkAuthStatus();
 
 // Handle Google OAuth callback (token in URL)
@@ -675,10 +686,19 @@ function setupPasswordSetupToggles() {
 async function handlePasswordSetup(e) {
     e.preventDefault();
     
-    const newPassword = document.getElementById('setupNewPassword').value;
-    const confirmPassword = document.getElementById('setupConfirmPassword').value;
+    const newPasswordInput = document.getElementById('setupNewPassword');
+    const confirmPasswordInput = document.getElementById('setupConfirmPassword');
     const errorDiv = document.getElementById('passwordSetupError');
     const submitBtn = document.getElementById('submitPasswordSetupBtn');
+    
+    // Validate elements exist
+    if (!newPasswordInput || !confirmPasswordInput || !submitBtn) {
+        showPasswordSetupError('Form elements not found. Please refresh the page.');
+        return;
+    }
+    
+    const newPassword = newPasswordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
     
     // Clear previous errors
     if (errorDiv) {

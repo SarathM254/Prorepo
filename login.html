@@ -23,9 +23,8 @@
     <!-- Critical CSS - Load First -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/auth.css">
-    <!-- Non-Critical CSS - Load Asynchronously -->
-    <link rel="preload" href="css/password-setup.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="css/password-setup.css"></noscript>
+    <!-- Load password-setup.css directly (needed for modal) -->
+    <link rel="stylesheet" href="css/password-setup.css">
 </head>
 <body>
     <script>
