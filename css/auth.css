@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff; /* Pure white background */
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -18,12 +18,22 @@ body {
 .login-container {
     background: white;
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     padding: 3rem;
     width: 100%;
     max-width: 400px;
     position: relative;
     overflow: hidden;
+    
+    /* Elegant multi-layer shadow that fades outward */
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.02),      /* Very close, very subtle */
+        0 4px 8px rgba(0, 0, 0, 0.03),      /* Close layer */
+        0 8px 16px rgba(0, 0, 0, 0.04),     /* Medium layer */
+        0 16px 32px rgba(0, 0, 0, 0.05),    /* Outer layer */
+        0 32px 64px rgba(0, 0, 0, 0.06);    /* Fading trail */
+    
+    /* Smooth transitions for hover effects */
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .login-container::before {
@@ -384,6 +394,17 @@ body {
     text-align: center;
 }
 
+/* Optional: Subtle hover enhancement */
+.login-container:hover {
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.03),
+        0 4px 8px rgba(0, 0, 0, 0.04),
+        0 8px 16px rgba(0, 0, 0, 0.05),
+        0 16px 32px rgba(0, 0, 0, 0.06),
+        0 32px 64px rgba(0, 0, 0, 0.07);
+    transform: translateY(-2px);
+}
+
 /* Login Form Container */
 .login-form-container {
     width: 100%;
@@ -439,6 +460,12 @@ body {
         padding: 2rem 1.5rem; /* Slightly reduced padding */
         margin: 0.5rem;
         border-radius: 16px; /* Slightly smaller radius on mobile */
+        /* Slightly lighter shadow on mobile for performance */
+        box-shadow: 
+            0 1px 2px rgba(0, 0, 0, 0.02),
+            0 2px 4px rgba(0, 0, 0, 0.03),
+            0 4px 8px rgba(0, 0, 0, 0.04),
+            0 8px 16px rgba(0, 0, 0, 0.05);
     }
     
     .logo h1 {
