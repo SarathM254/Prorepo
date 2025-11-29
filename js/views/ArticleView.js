@@ -80,7 +80,15 @@ const ArticleView = {
             const initialBatch = ArticleModel.getNextBatch();
             console.log('📱 [ArticleView] Mobile: Rendering initial batch of', initialBatch.length, 'articles');
             this.elements.newsGrid.innerHTML = '';
-            this.renderArticleGrid(initialBatch);
+            // Render first batch with first article prioritized
+            const fragment = document.createDocumentFragment();
+            initialBatch.forEach((article, index) => {
+                const articleEl = document.createElement('div');
+                articleEl.className = 'news-card';
+                articleEl.innerHTML = this.createArticleHTML(article, false, index === 0);
+                fragment.appendChild(articleEl);
+            });
+            this.elements.newsGrid.appendChild(fragment);
             this.elements.newsGrid.style.display = 'grid';
             // Show sentinel for infinite scroll
             if (this.elements.scrollSentinel) {
@@ -100,7 +108,7 @@ const ArticleView = {
             desktopArticles.forEach((article, index) => {
                 const articleEl = document.createElement('div');
                 articleEl.className = 'news-card';
-                articleEl.innerHTML = this.createArticleHTML(article, false);
+                articleEl.innerHTML = this.createArticleHTML(article, false, index === 0);
                 fragment.appendChild(articleEl);
                 console.log(`  └─ Article ${index + 1}: ${article.title?.substring(0, 30)}...`);
             });
@@ -124,10 +132,11 @@ const ArticleView = {
      */
     renderArticleGrid(articles) {
         const fragment = document.createDocumentFragment();
-        articles.forEach(article => {
+        articles.forEach((article, index) => {
             const articleEl = document.createElement('div');
             articleEl.className = 'news-card';
-            articleEl.innerHTML = this.createArticleHTML(article, false);
+            // All articles in subsequent batches are lazy loaded
+            articleEl.innerHTML = this.createArticleHTML(article, false, false);
             fragment.appendChild(articleEl);
         });
         this.elements.newsGrid.appendChild(fragment);
@@ -137,9 +146,10 @@ const ArticleView = {
      * Generates HTML for a single article card
      * @param {Object} article - Article object
      * @param {boolean} isFeatured - Whether this is a featured article
+     * @param {boolean} isFirstArticle - Whether this is the first article (for fetchpriority)
      * @returns {string} HTML string
      */
-    createArticleHTML(article, isFeatured) {
+    createArticleHTML(article, isFeatured, isFirstArticle = false) {
         console.log('🔨 [ArticleView] Creating HTML for article:', article.id, article.title);
         console.log('🖼️ [ArticleView] Image path:', article.image_path);
         console.log('✍️ [ArticleView] Author:', article.author_name);
@@ -147,9 +157,14 @@ const ArticleView = {
         const timeAgo = Helpers.getTimeAgo(article.created_at);
         const titleTag = isFeatured ? 'h2' : 'h3';
         
+        // Optimize image loading: first article gets eager loading and high priority
+        const imageLoading = isFirstArticle ? 'eager' : 'lazy';
+        const fetchPriorityAttr = isFirstArticle ? ' fetchpriority="high"' : '';
+        const decodingAttr = ' decoding="async"';
+        
         return `
             <div class="card-image">
-                <img src="${article.image_path}" alt="${article.title}" loading="lazy" onerror="console.error('❌ Image failed to load:', '${article.image_path}')">
+                <img src="${article.image_path}" alt="${article.title}" loading="${imageLoading}"${decodingAttr}${fetchPriorityAttr} onerror="console.error('❌ Image failed to load:', '${article.image_path}')">
                 <div class="card-category">${article.tag}</div>
             </div>
             <div class="card-content">

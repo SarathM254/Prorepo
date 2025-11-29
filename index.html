@@ -4,22 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proto - Campus News</title>
-    <!-- Google Fonts -->
+    <!-- DNS Prefetch for External Resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <!-- Preconnect to Critical External Domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <!-- Google Fonts with display=swap -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- CSS Modules -->
+    <!-- Font Awesome - Defer Loading -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    <!-- Preload Critical CSS -->
+    <link rel="preload" href="css/base.css" as="style">
+    <link rel="preload" href="css/header.css" as="style">
+    <link rel="preload" href="css/cards.css" as="style">
+    <!-- Critical CSS - Load First -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/header.css">
     <link rel="stylesheet" href="css/home-navigation.css">
     <link rel="stylesheet" href="css/cards.css">
-    <link rel="stylesheet" href="css/forms.css">
-    <link rel="stylesheet" href="css/image-adjustment.css">
-    <link rel="stylesheet" href="css/profile.css">
-    <link rel="stylesheet" href="css/footer.css">
     <link rel="stylesheet" href="css/loading.css">
-    <link rel="stylesheet" href="css/admin-panel.css">
-    <link rel="stylesheet" href="css/password-setup.css">
+    <!-- Non-Critical CSS - Load Asynchronously -->
+    <link rel="preload" href="css/forms.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/forms.css"></noscript>
+    <link rel="preload" href="css/image-adjustment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/image-adjustment.css"></noscript>
+    <link rel="preload" href="css/profile.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/profile.css"></noscript>
+    <link rel="preload" href="css/footer.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/footer.css"></noscript>
+    <!-- Conditional CSS - Load Only When Needed -->
+    <link rel="preload" href="css/admin-panel.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/admin-panel.css"></noscript>
+    <link rel="preload" href="css/password-setup.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="css/password-setup.css"></noscript>
 </head>
 <body class="home-page">
     <!-- Header -->
@@ -244,6 +265,11 @@
         </div>
     </footer>
 
+    <!-- Async CSS Loader Script -->
+    <script>
+        /*! loadCSS. [c]2017 Filament Group, Inc. MIT License */
+        (function(w){"use strict";var loadCSS=function(href,before,media){var doc=w.document;var ss=doc.createElement("link");var ref;if(before){ref=before}else{var refs=(doc.body||doc.getElementsByTagName("head")[0]).childNodes;ref=refs[refs.length-1];}var sheets=doc.styleSheets;ss.rel="stylesheet";ss.href=href;ss.media="only x";function ready(cb){if(doc.body){return cb()}setTimeout(function(){ready(cb)})}ready(function(){ref.parentNode.insertBefore(ss,before?ref:ref.nextSibling)});var onloadcssdefined=function(cb){var resolvedHref=ss.href;var i=sheets.length;while(i--){if(sheets[i].href===resolvedHref){return cb()}}setTimeout(function(){onloadcssdefined(cb)})};function onload(){ss.onload=null;ss.media=media||"all"}if(ss.addEventListener){ss.addEventListener("load",onload)}ss.onloadcssdefined=onloadcssdefined;onloadcssdefined(onload);return ss};if(typeof exports!=="undefined"){exports.loadCSS=loadCSS}else{w.loadCSS=loadCSS}}(typeof global!=="undefined"?global:this));
+    </script>
     <!-- JavaScript Modules - Load in Order -->
     <script src="js/config/bull-logo.js"></script>
     <script src="js/utils/helpers.js"></script>

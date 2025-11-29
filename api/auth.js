@@ -271,9 +271,22 @@ async function handleGoogle(req, res) {
 
           const token = generateToken(userResponse);
 
+          // Check if user needs password setup (new user or no password)
+          const needsPasswordSetup = !user.password || user.password === null;
+          const isNewUser = user.created_at && (new Date() - new Date(user.created_at)) < 60000; // Created within last minute
+
           // Redirect to frontend with token
           const frontendUrl = process.env.FRONTEND_URL || 'https://proto-social.vercel.app';
-          const redirectUrl = `${frontendUrl}/index.html?token=${encodeURIComponent(token)}`;
+          let redirectUrl;
+
+          if (needsPasswordSetup) {
+            // New user or no password - redirect to login page with password setup flag
+            redirectUrl = `${frontendUrl}/login.html?token=${encodeURIComponent(token)}&setupPassword=true&isNewUser=${isNewUser}`;
+          } else {
+            // Existing user with password - redirect to home
+            redirectUrl = `${frontendUrl}/index.html?token=${encodeURIComponent(token)}`;
+          }
+
           return res.redirect(redirectUrl);
         } catch (error) {
           const frontendUrl = process.env.FRONTEND_URL || 'https://proto-social.vercel.app';
@@ -352,5 +365,6 @@ export default async function handler(req, res) {
       });
   }
 }
+
 
 

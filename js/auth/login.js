@@ -77,10 +77,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     const error = urlParams.get('error');
+    const setupPassword = urlParams.get('setupPassword') === 'true';
+    const isNewUser = urlParams.get('isNewUser') === 'true';
 
     if (token) {
         localStorage.setItem('authToken', token);
-        window.location.href = '/index.html';
+        
+        // Check if password setup is required
+        if (setupPassword) {
+            // Show password setup modal instead of redirecting
+            showPasswordSetupModal();
+            // Clean URL - remove query parameters
+            window.history.replaceState({}, document.title, '/login.html');
+        } else {
+            // Existing user with password - redirect to home
+            window.location.href = '/index.html';
+        }
         return;
     }
     
@@ -97,6 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Setup password toggle
     setupPasswordToggle();
+
+    // Setup password setup form
+    setupPasswordSetupForm();
 
     // Login/Register form submission
     const loginForm = document.getElementById('loginForm');
@@ -594,6 +609,169 @@ function showError(message) {
         setTimeout(() => {
             errorDiv.remove();
         }, 5000);
+    }
+}
+
+/**
+ * Shows password setup modal
+ */
+function showPasswordSetupModal() {
+    const modal = document.getElementById('passwordSetupModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        setupPasswordSetupToggles();
+    }
+}
+
+/**
+ * Hides password setup modal
+ */
+function hidePasswordSetupModal() {
+    const modal = document.getElementById('passwordSetupModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Sets up password visibility toggles for password setup form
+ */
+function setupPasswordSetupToggles() {
+    const toggles = [
+        { inputId: 'setupNewPassword', toggleId: 'setupNewPasswordToggle', iconId: 'setupNewPasswordToggleIcon' },
+        { inputId: 'setupConfirmPassword', toggleId: 'setupConfirmPasswordToggle', iconId: 'setupConfirmPasswordToggleIcon' }
+    ];
+
+    toggles.forEach(({ inputId, toggleId, iconId }) => {
+        const passwordInput = document.getElementById(inputId);
+        const toggleBtn = document.getElementById(toggleId);
+        const toggleIcon = document.getElementById(iconId);
+        
+        if (passwordInput && toggleBtn && toggleIcon) {
+            // Remove existing listeners by cloning
+            const newToggleBtn = toggleBtn.cloneNode(true);
+            toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+            const newToggleIcon = document.getElementById(iconId);
+            
+            newToggleBtn.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                if (type === 'text') {
+                    newToggleIcon.classList.remove('fa-eye');
+                    newToggleIcon.classList.add('fa-eye-slash');
+                } else {
+                    newToggleIcon.classList.remove('fa-eye-slash');
+                    newToggleIcon.classList.add('fa-eye');
+                }
+            });
+        }
+    });
+}
+
+/**
+ * Handles password setup form submission
+ */
+async function handlePasswordSetup(e) {
+    e.preventDefault();
+    
+    const newPassword = document.getElementById('setupNewPassword').value;
+    const confirmPassword = document.getElementById('setupConfirmPassword').value;
+    const errorDiv = document.getElementById('passwordSetupError');
+    const submitBtn = document.getElementById('submitPasswordSetupBtn');
+    
+    // Clear previous errors
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
+    
+    // Validate passwords
+    if (!newPassword || newPassword.length < 6) {
+        showPasswordSetupError('Password must be at least 6 characters long');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showPasswordSetupError('Passwords do not match');
+        return;
+    }
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting Password...';
+    
+    try {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            throw new Error('Session expired. Please try logging in again.');
+        }
+        
+        // Use profile endpoint for password setup
+        const response = await fetch('/api/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                password: newPassword,
+                currentPassword: '' // Empty for Google users setting password for first time
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Password set successfully - redirect to home
+            hidePasswordSetupModal();
+            window.location.href = '/index.html';
+        } else {
+            throw new Error(data.error || 'Failed to set password');
+        }
+    } catch (error) {
+        console.error('Password setup error:', error);
+        showPasswordSetupError(error.message || 'Failed to set password. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Set Password & Continue';
+    }
+}
+
+/**
+ * Shows password setup error message
+ */
+function showPasswordSetupError(message) {
+    const errorDiv = document.getElementById('passwordSetupError');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+}
+
+/**
+ * Sets up password setup form event listeners
+ */
+function setupPasswordSetupForm() {
+    const form = document.getElementById('passwordSetupForm');
+    if (form) {
+        form.addEventListener('submit', handlePasswordSetup);
+    }
+    
+    // Info button
+    const infoBtn = document.getElementById('passwordSetupInfoBtn');
+    const infoTooltip = document.getElementById('passwordSetupInfoTooltip');
+    const closeTooltip = document.getElementById('closeInfoTooltip');
+    
+    if (infoBtn && infoTooltip) {
+        infoBtn.addEventListener('click', () => {
+            infoTooltip.style.display = 'flex';
+        });
+    }
+    
+    if (closeTooltip && infoTooltip) {
+        closeTooltip.addEventListener('click', () => {
+            infoTooltip.style.display = 'none';
+        });
     }
 }
 
