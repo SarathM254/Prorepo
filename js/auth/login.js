@@ -74,8 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
         showError(decodeURIComponent(error));
     }
 
-    // Setup form toggle
-    setupFormToggle();
+    // Ensure both sections are visible (no toggle needed)
+    const emailForm = document.getElementById('emailLoginForm');
+    const googleSection = document.querySelector('.google-login-section');
+    
+    if (emailForm) emailForm.style.display = 'block';
+    if (googleSection) googleSection.style.display = 'block';
     
     // Setup password toggle
     setupPasswordToggle();
@@ -265,29 +269,12 @@ async function login(email, password) {
 }
 
 /**
- * Handles form toggle
+ * Form toggle is no longer needed - both sections are always visible
+ * This function is kept for compatibility but does nothing
  */
 function setupFormToggle() {
-    const emailToggle = document.getElementById('emailLoginToggle');
-    const googleToggle = document.getElementById('googleLoginToggle');
-    const emailForm = document.getElementById('emailLoginForm');
-    const googleSection = document.getElementById('googleLoginSection');
-    
-    if (emailToggle && googleToggle) {
-        emailToggle.addEventListener('click', () => {
-            emailToggle.classList.add('active');
-            googleToggle.classList.remove('active');
-            emailForm.style.display = 'block';
-            googleSection.style.display = 'none';
-        });
-        
-        googleToggle.addEventListener('click', () => {
-            googleToggle.classList.add('active');
-            emailToggle.classList.remove('active');
-            emailForm.style.display = 'none';
-            googleSection.style.display = 'block';
-        });
-    }
+    // No longer needed - both sections always visible
+    // Can be removed entirely or left as empty function for compatibility
 }
 
 /**
