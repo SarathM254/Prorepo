@@ -10,8 +10,12 @@ backend/node_modules/
 .env.local
 .env.production
 
-# Database (old SQLite - not used in Vercel)
+# Database (SQLite - local development only, not used in Vercel)
 backend/proto.db
+
+# Local uploads (local development only, production uses Cloudinary)
+uploads/*
+!uploads/.gitkeep
 
 # Logs
 *.log
