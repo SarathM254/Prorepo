@@ -41,18 +41,32 @@ const AppController = {
         console.log("✅ [AppController] Auth check complete");
 
         // Only load articles if password is set (checkAuthStatus will block if not)
+        // Check if we're on localhost (local development)
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.port === '3000';
+        
         const authToken = localStorage.getItem('authToken');
-        if (authToken) {
+        
+        // For localhost, always try to load articles (session-based auth)
+        // For production, check token first
+        if (isLocalhost || authToken) {
             try {
-                const response = await fetch('/api/auth/status', {
-                    headers: {
+                const requestOptions = {
+                    credentials: 'include'
+                };
+                
+                if (!isLocalhost && authToken) {
+                    requestOptions.headers = {
                         'Authorization': `Bearer ${authToken}`
-                    }
-                });
+                    };
+                }
+                
+                const response = await fetch('/api/auth/status', requestOptions);
                 const data = await response.json();
                 
-                // Only load articles if user has password
-                if (data.authenticated && data.user.hasPassword !== false) {
+                // Only load articles if user has password (or on localhost where password is always set)
+                if (data.authenticated && (isLocalhost || data.user.hasPassword !== false)) {
                     console.log("📰 [AppController] Fetching articles...");
                     await this.loadArticles();
                 } else {
@@ -89,21 +103,33 @@ const AppController = {
     async checkAuthStatus() {
         console.log("AppController.checkAuthStatus() called.");
         
-        // Check if user has auth token in localStorage
-        const authToken = localStorage.getItem('authToken');
+        // Check if we're on localhost (local development)
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.port === '3000';
         
-        if (!authToken) {
-            console.log("No auth token found - redirecting to login");
+        // Prepare request options
+        const requestOptions = {
+            credentials: 'include' // Always include cookies (works for both local and production)
+        };
+        
+        // For production, check for token and include in headers
+        const authToken = localStorage.getItem('authToken');
+        if (!isLocalhost && !authToken) {
+            console.log("No auth token found (production) - redirecting to login");
             window.location.href = '/login.html';
             return;
         }
         
+        // For production, include Bearer token
+        if (!isLocalhost && authToken) {
+            requestOptions.headers = {
+                'Authorization': `Bearer ${authToken}`
+            };
+        }
+        
         try {
-            const response = await fetch('/api/auth/status', {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
+            const response = await fetch('/api/auth/status', requestOptions);
             const data = await response.json();
             
             if (data.authenticated) {
