@@ -1,11 +1,13 @@
 {
   "name": "proto-campus-news",
   "version": "1.0.0",
+  "type": "module",
   "description": "Proto - Campus News Platform deployed on Vercel",
   "main": "index.html",
   "scripts": {
     "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "build": "echo 'No build step required for static site with serverless functions'"
   },
   "keywords": [
     "campus",
