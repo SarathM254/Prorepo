@@ -5,9 +5,10 @@
     box-sizing: border-box;
 }
 
+/* Ensure white background for login page - override base.css */
 body {
     font-family: 'Inter', sans-serif;
-    background: #ffffff; /* Pure white background */
+    background: #ffffff !important; /* Pure white background - must override base.css */
     min-height: 100vh;
     display: flex;
     align-items: center;
